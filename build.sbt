@@ -10,4 +10,6 @@ organization := "ohnosequences"
 
 bucketSuffix := "era7.com"
 
-libraryDependencies += "org.kohsuke" %% "github-api" % "1.49"
+resolvers += "GH api" at "http://repo.jenkins-ci.org/public/"
+
+libraryDependencies += "org.kohsuke" % "github-api" % "1.49"
