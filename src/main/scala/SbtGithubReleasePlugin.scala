@@ -11,14 +11,20 @@ object SbtGithubReleasePlugin extends sbt.Plugin {
   object GithubRelease {
 
     // Setting keys:
-    lazy val notesDir = settingKey[File]("Directory with release notes")
-    lazy val notesFile = settingKey[File]("File with the release notes")
-    lazy val repo = settingKey[String]("org/repo")
-    lazy val tag = settingKey[String]("The name of the tag: vX.Y.Z")
-    lazy val name = settingKey[String]("The name of the release")
-    lazy val commitish = settingKey[String]("Specifies the commitish value that determines where the Git tag is created from")
-    lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
-    lazy val prerelease = settingKey[Boolean]("true to identify the release as a prerelease. false to identify the release as a full release")
+    object Keys {
+      lazy val notesDir = settingKey[File]("Directory with release notes")
+      lazy val notesFile = settingKey[File]("File with the release notes")
+      lazy val repo = settingKey[String]("org/repo")
+      lazy val tag = settingKey[String]("The name of the tag: vX.Y.Z")
+      lazy val releaseName = settingKey[String]("The name of the release")
+      lazy val commitish = settingKey[String]("Specifies the commitish value that determines where the Git tag is created from")
+      lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
+      lazy val prerelease = settingKey[Boolean]("true to identify the release as a prerelease. false to identify the release as a full release")
+      lazy val uploadAsset = settingKey[Boolean]("true to upload package artifact to Github")
+    }
+
+    import Keys._
+
 
     lazy val checkGithubCredentials = taskKey[GitHub]("Checks authentification and suggests to create a new oauth token if needed")
     lazy val releaseOnGithub = taskKey[Unit]("Publishes a release of Github")
@@ -30,11 +36,12 @@ object SbtGithubReleasePlugin extends sbt.Plugin {
       notesFile := notesDir.value / (version.value+".markdown"),
       repo := organization.value +"/"+ name.value,
       tag := "v"+version.value,
-      name := name.value +" "+ tag.value,
+      releaseName := name.value +" "+ tag.value,
       commitish := "",
       draft := false,
       // If it's a milestone, it should be a prerelease:
       prerelease := version.value.matches(""".*-M\d+$"""),
+      uploadAsset := false,
 
       checkGithubCredentials := {
         val log = streams.value.log
@@ -76,14 +83,20 @@ object SbtGithubReleasePlugin extends sbt.Plugin {
           val r = github.getRepository(repo.value).
           createRelease(tag.value).
           body(text).
-          name(name.value).
+          name(releaseName.value).
           draft(draft.value).
           prerelease(prerelease.value)
           if (commitish.value.isEmpty) r else r.commitish(commitish.value)
         }.create
 
         if (release != null)
-          log.info(s"${repo.value} ${tag.value} Github release is published at ${release.getUrl}")
+          log.info(s"Github release ${release.getName} is published")
+
+        if (uploadAsset.value) {
+          val asset = (packageBin in Compile).value
+          release.uploadAsset(asset, "application/zip")
+          log.info(s"${asset} is uploaded to Github")
+        }
       }
     )
 
