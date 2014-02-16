@@ -1,12 +1,15 @@
+import sbtrelease._
+import ReleaseKeys._
+
 Nice.scalaProject
 
 sbtPlugin := true
 
+organization := "ohnosequences"
+
 name := "sbt-github-release"
 
 description := "sbt plugin using github releases api"
-
-organization := "ohnosequences"
 
 bucketSuffix := "era7.com"
 
@@ -20,3 +23,8 @@ GithubRelease.defaults
 GithubRelease.repo := "ohnosequences/sbt-github-release"
 
 GithubRelease.draft := true
+
+lazy val checkGHCredsStep = ReleaseStep({st => Project.extract(st).runTask(GithubRelease.checkGithubCredentials, st)._1 })
+lazy val githubReleaseStep = ReleaseStep({st => Project.extract(st).runTask(GithubRelease.releaseOnGithub, st)._1 })
+
+releaseProcess := checkGHCredsStep +: releaseProcess.value :+ githubReleaseStep
