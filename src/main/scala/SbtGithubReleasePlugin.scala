@@ -12,15 +12,14 @@ object SbtGithubReleasePlugin extends sbt.Plugin {
 
     // Setting keys:
     lazy val notesDir = settingKey[File]("Directory with release notes")
-    lazy val notesFile = settingKey[File]("File with the release notes")
+    lazy val notesFile = settingKey[File]("File with the release notes for the current version")
     lazy val repo = settingKey[String]("org/repo")
     lazy val tag = settingKey[String]("The name of the tag: vX.Y.Z")
     lazy val releaseName = settingKey[String]("The name of the release")
     lazy val commitish = settingKey[String]("Specifies the commitish value that determines where the Git tag is created from")
     lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
     lazy val prerelease = settingKey[Boolean]("true to identify the release as a prerelease. false to identify the release as a full release")
-    lazy val asset = taskKey[File]("The file to upload")
-    lazy val uploadAsset = settingKey[Boolean]("true to upload package artifact to Github")
+    lazy val assets = taskKey[Seq[File]]("The files to upload")
 
     lazy val checkGithubCredentials = taskKey[GitHub]("Checks authentification and suggests to create a new oauth token if needed")
     lazy val releaseOnGithub = taskKey[GHRelease]("Publishes a release of Github")
@@ -28,7 +27,7 @@ object SbtGithubReleasePlugin extends sbt.Plugin {
 
     // Defaults:
     lazy val defaults: Seq[Setting[_]] = Seq(
-      notesDir := file(baseDirectory.value + "/notes/"),
+      notesDir := baseDirectory.value / "notes",
       notesFile := notesDir.value / (version.value+".markdown"),
       repo := organization.value +"/"+ normalizedName.value,
       tag := "v"+version.value,
@@ -38,8 +37,7 @@ object SbtGithubReleasePlugin extends sbt.Plugin {
       // If it's a milestone, it should be a prerelease:
       prerelease := version.value.matches(""".*-M\d+$"""),
 
-      asset := (packageBin in Compile).value,
-      uploadAsset := false,
+      assets := Seq((packageBin in Compile).value),
 
       checkGithubCredentials := {
         val log = streams.value.log
@@ -52,7 +50,7 @@ object SbtGithubReleasePlugin extends sbt.Plugin {
                 val gh = GitHub.connectUsingOAuth(token)
                 if (gh.isCredentialValid) {
                   IO.writeLines(conf, Seq("oauth = " + token))//, append = true)
-                  log.info("Wrote oauth token to " + conf)
+                  log.info("Wrote OAuth token to " + conf)
                 }
               } catch {
                 case e: Exception => log.error(e.toString)
@@ -75,7 +73,7 @@ object SbtGithubReleasePlugin extends sbt.Plugin {
 
         val github = checkGithubCredentials.value
         val log = streams.value.log
-        log.info(s"Releasing ${repo.value} ${tag.value}...")
+        log.info(s"Releasing ${releaseName.value} ${tag.value}...")
 
         val release = {
           val r = github.getRepository(repo.value).
@@ -88,11 +86,12 @@ object SbtGithubReleasePlugin extends sbt.Plugin {
         }.create
 
         if (release != null)
-          log.info(s"Github release ${release.getName} is published")
+          log.info(s"Github release ${release.getName} is published" + 
+            (if(draft.value) " (as a draft)" else ""))
 
-        if (uploadAsset.value) {
-          release.uploadAsset(asset.value, "application/zip")
-          log.info(s"${asset.value} is uploaded to Github")
+        assets.value foreach { asset =>
+          release.uploadAsset(asset, "application/zip")
+          log.info(s"File ${asset} is uploaded to Github")
         }
 
         release
