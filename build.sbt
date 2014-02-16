@@ -1,5 +1,7 @@
 import sbtrelease._
 import ReleaseKeys._
+import ReleaseStateTransformations._
+
 
 Nice.scalaProject
 
@@ -27,4 +29,17 @@ GithubRelease.draft := true
 lazy val checkGHCredsStep = ReleaseStep({st => Project.extract(st).runTask(GithubRelease.checkGithubCredentials, st)._1 })
 lazy val githubReleaseStep = ReleaseStep({st => Project.extract(st).runTask(GithubRelease.releaseOnGithub, st)._1 })
 
-releaseProcess := checkGHCredsStep +: releaseProcess.value :+ githubReleaseStep
+releaseProcess := Seq[ReleaseStep](
+  checkSnapshotDependencies,
+  checkGHCredsStep, ///
+  inquireVersions,
+  runTest,
+  setReleaseVersion,
+  commitReleaseVersion,
+  tagRelease,
+  publishArtifacts,
+  githubReleaseStep, ///
+  setNextVersion,
+  commitNextVersion,
+  pushChanges
+)
