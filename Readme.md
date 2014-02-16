@@ -75,4 +75,4 @@ But you don't need to create this file manually — when running `releaseOnGithu
 
 ### Intergation with sbt-release
 
-`TODO`
+See the configuration of this project as an example.
