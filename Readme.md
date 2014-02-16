@@ -7,8 +7,9 @@ It can be useful as a part of [automated release process](https://github.com/sbt
 
 ### Features
 
-* Optionally publishes release notes
+* Publishes release notes
 * Optionally uploads files
+* Exposes all available parameters of Github releases API 
 
 
 ## Usage
@@ -52,6 +53,8 @@ GithubRelease.repo := "ohnosequences/sbt-github-release"
 GithubRelease.draft := true
 ```
 
+If you don't want to upload any files, just set `GithubRelease.assests := Seq()`
+
 
 ### Task keys
 
@@ -67,7 +70,7 @@ This plugin requires an OAuth token from your Github account. It should be place
 oauth = 623454b0sd3645bdfdes541dd1fdg34504a8cXXX
 ```
 
-But you don't need to create it manually — when running `releaseOnGithub`, plugin checks this file and if there is no valid token, asks you to go and create one and then saves it.
+But you don't need to create this file manually — when running `releaseOnGithub`, plugin checks it and if there is no valid token, asks you to go and create one and then saves it.
 
 
 ### Intergation with sbt-release
