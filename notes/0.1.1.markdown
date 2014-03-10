@@ -1,0 +1,2 @@
+* Fixed version of the github-api library to `1.49`
+* Fixed pre-release version definition according to the Semantic Versioning (if it contains a hyphen)
