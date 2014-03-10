@@ -21,7 +21,7 @@ To start using this plugin add the following to the `project/plugins.sbt`:
 ```scala
 resolvers += "Era7 maven releases" at "http://releases.era7.com.s3.amazonaws.com"
 
-addSbtPlugin("ohnosequences" % "sbt-github-release" % "0.1.0")
+addSbtPlugin("ohnosequences" % "sbt-github-release" % "0.1.1")
 ```
 
 > **Note:** you should use sbt `v0.13.+`
@@ -40,7 +40,7 @@ Key           | Type        | Default value
 `releaseName` | `String`    | `"<name> <tag>"`
 `commitish`   | `String`    | `""` (the default repo's branch)
 `draft`       | `Boolean`   | `false`
-`prerelease`  | `Boolean`   | `false` (`true` if the version has a milestone suffix)
+`prerelease`  | `Boolean`   | `false` (`true` if the version has a hyphen)
 `assets`      | `Seq[File]` | `Seq(<packageBin in Compile>)`
 
 So you can add to your `build.sbt` for example

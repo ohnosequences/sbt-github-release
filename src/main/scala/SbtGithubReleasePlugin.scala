@@ -34,8 +34,9 @@ object SbtGithubReleasePlugin extends sbt.Plugin {
       releaseName := name.value +" "+ tag.value,
       commitish := "",
       draft := false,
-      // If it's a milestone, it should be a prerelease:
-      prerelease := version.value.matches(""".*-M\d+$"""),
+      // According to the Semantic Versioning Specification (rule 9) 
+      // a version containing a hyphen is a pre-release version 
+      prerelease := version.value.matches(""".*-.*"""),
 
       assets := Seq((packageBin in Compile).value),
 
