@@ -21,7 +21,7 @@ To start using this plugin add the following to the `project/plugins.sbt`:
 ```scala
 resolvers += "Era7 maven releases" at "http://releases.era7.com.s3.amazonaws.com"
 
-addSbtPlugin("ohnosequences" % "sbt-github-release" % "0.1.1")
+addSbtPlugin("ohnosequences" % "sbt-github-release" % "0.1.2")
 ```
 
 > **Note:** you should use sbt `v0.13.+`
@@ -75,4 +75,4 @@ But you don't need to create this file manually — when running `releaseOnGithu
 
 ### Intergation with sbt-release
 
-See the configuration of this project as an example.
+`TODO`
