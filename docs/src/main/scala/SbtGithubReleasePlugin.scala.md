@@ -62,21 +62,27 @@ object SbtGithubReleasePlugin extends sbt.Plugin {
             case _ => sys.error("If you want to use sbt-github-release plugin, you should set credentials correctly")
           }
         } 
-        log.info("Checked Github credentials")
+        log.info("Github credentials are ok")
         GitHub.connect
       },
 
       releaseOnGithub := {
         if (tag.value.endsWith("-SNAPSHOT"))
-          sys.error("You shouldn't publish snapshots, maybe you forgot to set correct version")
+          sys.error(s"Current version is '${version.value}'. You shouldn't publish snapshots, maybe you forgot to set the release version")
+
+        val log = streams.value.log
 
         val text = IO.read(notesFile.value)
-        if (text.isEmpty)
-          sys.error(s"Release notes file ${notesFile.value} is empty")
+        val notesPath = notesFile.value.relativeTo(baseDirectory.value).getOrElse(notesFile.value)
+        if (text.isEmpty) {
+          log.error(s"Release notes file [${notesPath}] is empty")
+          SimpleReader.readLine("Are you sure you want to continue without release notes (y/n)? [n] ") match {
+            case Some("n" | "N") => sys.error("Aborting release. Write release notes and try again")
+            case _ => // go on
+          }
+        } else log.info(s"Using release notes from the [${notesPath}] file")
 
         val github = checkGithubCredentials.value
-        val log = streams.value.log
-        log.info(s"Releasing ${releaseName.value} ${tag.value}...")
 
         val release = {
           val r = github.getRepository(repo.value).
@@ -88,13 +94,16 @@ object SbtGithubReleasePlugin extends sbt.Plugin {
           if (commitish.value.isEmpty) r else r.commitish(commitish.value)
         }.create
 
-        if (release != null)
-          log.info(s"Github release ${release.getName} is published" + 
-            (if(draft.value) " (as a draft)" else ""))
+        if (release != null) {
+          val pre = if (prerelease.value) "pre-" else ""
+          val pub = if(draft.value) "saved as a draft" else "published"
+          log.info(s"Github ${pre}release '${release.getName}' is ${pub} at\n  ${release.getHtmlUrl}")
+        } else sys.error("Something went wrong with Github release")
 
         assets.value foreach { asset =>
           release.uploadAsset(asset, "application/zip")
-          log.info(s"File ${asset} is uploaded to Github")
+          val rel = asset.relativeTo(baseDirectory.value).getOrElse(asset)
+          log.info(s"Asset [${rel}] is uploaded to Github")
         }
 
         release
