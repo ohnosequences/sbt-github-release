@@ -8,8 +8,8 @@ It can be useful as a part of [automated release process](https://github.com/sbt
 ### Features
 
 * Publishes release notes
-* Optionally uploads files
-* Exposes all available parameters of Github releases API
+* Optionally uploads jar assets
+* Exposes all available parameters of the Github releases API
 
 
 ## Usage
@@ -58,7 +58,7 @@ If you don't want to upload any files, just set `GithubRelease.assests := Seq()`
 
 ### Task keys
 
-* `checkGithubCredentials` — checks Github OAuth token and help to set it if needed
+* `checkGithubCredentials` — checks Github OAuth token and helps to set it if needed
 * `releaseOnGithub` — the main task, which creates a release and publishes the assests
 
 
@@ -73,7 +73,7 @@ oauth = 623454b0sd3645bdfdes541dd1fdg34504a8cXXX
 But you don't need to create this file manually — when running `releaseOnGithub`, plugin checks it and if there is no valid token, asks you to go and create one and then saves it.
 
 
-### Intergation with sbt-release
+### Integration with sbt-release
 
 See how it's done in the [nice-sbt-settings](https://github.com/ohnosequences/nice-sbt-settings/blob/master/src/main/scala/ReleaseSettings.scala#L277-L290) plugin for an example.
 
