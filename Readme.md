@@ -9,7 +9,7 @@ It can be useful as a part of [automated release process](https://github.com/sbt
 
 * Publishes release notes
 * Optionally uploads files
-* Exposes all available parameters of Github releases API 
+* Exposes all available parameters of Github releases API
 
 
 ## Usage
@@ -75,4 +75,10 @@ But you don't need to create this file manually — when running `releaseOnGithu
 
 ### Intergation with sbt-release
 
-`TODO`
+See how it's done in the [nice-sbt-settings](https://github.com/ohnosequences/nice-sbt-settings/blob/master/src/main/scala/ReleaseSettings.scala#L277-L290) plugin for an example.
+
+
+## Contacts
+
+This project is maintained by [@laughedelic](https://github.com/laughedelic). Join the chat-room if you want to ask or discuss something  
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/ohnosequences/sbt-github-release?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
