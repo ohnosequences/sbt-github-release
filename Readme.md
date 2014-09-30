@@ -1,4 +1,5 @@
 ## Sbt Github release plugin
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/ohnosequences/sbt-github-release?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This is a simple sbt-plugin for creating [Github releases](https://github.com/blog/1547-release-your-software) with proper release notes and optional artifact uploading using [kohsuke/github-api](https://github.com/kohsuke/github-api) library.
 
