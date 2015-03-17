@@ -19,9 +19,9 @@ It can be useful as a part of [automated release process](https://github.com/sbt
 To start using this plugin add the following to the `project/plugins.sbt`:
 
 ```scala
-resolvers += "Era7 maven releases" at "http://releases.era7.com.s3.amazonaws.com"
+resolvers += "Era7 maven releases" at "https://s3-eu-west-1.amazonaws.com/releases.era7.com"
 
-addSbtPlugin("ohnosequences" % "sbt-github-release" % "0.1.2")
+addSbtPlugin("ohnosequences" % "sbt-github-release" % "<version>")
 ```
 
 > **Note:** you should use sbt `v0.13.+`
@@ -43,11 +43,9 @@ Key           | Type        | Default value
 `prerelease`  | `Boolean`   | `false` (`true` if the version has a hyphen)
 `assets`      | `Seq[File]` | `Seq(<packageBin in Compile>)`
 
-So you can add to your `build.sbt` for example
+You can change them in your `build.sbt` for example
 
 ```scala
-GithubRelease.defaults
-
 GithubRelease.repo := "ohnosequences/sbt-github-release"
 
 GithubRelease.draft := true
