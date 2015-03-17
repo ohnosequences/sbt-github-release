@@ -1,0 +1,2 @@
+- Upgraded dependency on org.kohsuke/github-api from 1.49 to 1.63
+- Made it an auto plugin
