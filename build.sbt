@@ -5,7 +5,7 @@ organization := "ohnosequences"
 description := "sbt plugin using github releases api"
 
 sbtPlugin := true
-scalaVersion := "2.10.4"
+scalaVersion := "2.10.5"
 bucketSuffix := "era7.com"
 
 resolvers += "Github-API" at "http://repo.jenkins-ci.org/public/"
