@@ -1,0 +1,1 @@
+- Fixed auto import for the setting keys and tasks
