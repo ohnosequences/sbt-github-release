@@ -8,22 +8,24 @@ import scala.collection.JavaConversions._
 
 object SbtGithubReleasePlugin extends AutoPlugin {
 
-  object GithubRelease {
-    // Setting keys:
-    lazy val notesDir = settingKey[File]("Directory with release notes")
-    lazy val notesFile = settingKey[File]("File with the release notes for the current version")
-    lazy val repo = settingKey[String]("org/repo")
-    lazy val tag = settingKey[String]("The name of the tag: vX.Y.Z")
-    lazy val releaseName = settingKey[String]("The name of the release")
-    lazy val commitish = settingKey[String]("Specifies the commitish value that determines where the Git tag is created from")
-    lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
-    lazy val prerelease = settingKey[Boolean]("true to identify the release as a prerelease. false to identify the release as a full release")
-    lazy val assets = taskKey[Seq[File]]("The files to upload")
+  object autoImport {
+    // this object is just as a namespace:
+    object GithubRelease {
+      lazy val notesDir = settingKey[File]("Directory with release notes")
+      lazy val notesFile = settingKey[File]("File with the release notes for the current version")
+      lazy val repo = settingKey[String]("org/repo")
+      lazy val tag = settingKey[String]("The name of the tag: vX.Y.Z")
+      lazy val releaseName = settingKey[String]("The name of the release")
+      lazy val commitish = settingKey[String]("Specifies the commitish value that determines where the Git tag is created from")
+      lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
+      lazy val prerelease = settingKey[Boolean]("true to identify the release as a prerelease. false to identify the release as a full release")
+      lazy val assets = taskKey[Seq[File]]("The files to upload")
+    }
 
     lazy val checkGithubCredentials = taskKey[GitHub]("Checks authentification and suggests to create a new oauth token if needed")
     lazy val releaseOnGithub = taskKey[GHRelease]("Publishes a release of Github")
   }
-  import GithubRelease._
+  import autoImport._, GithubRelease._
 
 
   // This plugin will load automatically
