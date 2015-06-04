@@ -1,0 +1,1 @@
+[sbt-github-release](https://github.com/ohnosequences/sbt-github-release) is a simple sbt-plugin for creating [Github releases](https://github.com/blog/1547-release-your-software) with proper release notes and optional artifact uploading. It can be useful as a part of [automated release process](https://github.com/sbt/sbt-release).

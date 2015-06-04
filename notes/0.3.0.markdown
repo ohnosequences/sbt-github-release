@@ -1,4 +1,7 @@
-- Fixed key name conflict with Play plugin's.
+- Fixed key name conflict with Play plugin's (#4/#5 by @Kevin-Lee)
+
   ```
   Some keys were defined with the same name but different types: 'assets' (sbt.Task[java.io.File], sbt.Task[scala.collection.Seq[java.io.File]])
   ```
+
+  `assets` key is renamed to `releaseAssets`
