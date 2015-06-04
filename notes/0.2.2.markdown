@@ -1,0 +1,4 @@
+- Fixed key name conflict with Play plugin's.
+  ```
+  Some keys were defined with the same name but different types: 'assets' (sbt.Task[java.io.File], sbt.Task[scala.collection.Seq[java.io.File]])
+  ```

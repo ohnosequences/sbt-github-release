@@ -31,17 +31,17 @@ addSbtPlugin("ohnosequences" % "sbt-github-release" % "<version>")
 
 Most of these keys just reflect the [parameters from Github API](http://developer.github.com/v3/repos/releases/#create-a-release):
 
-Key           | Type        | Default value
--------------:|:------------|:--------------------------------------------------------
-`notesDir`    | `File`      | `notes/`
-`notesFile`   | `File`      | `<notesDir>/<version>.markdown`
-`repo`        | `String`    | `"<organization>/<normalizedName>"`
-`tag`         | `String`    | `"v<version>"`
-`releaseName` | `String`    | `"<name> <tag>"`
-`commitish`   | `String`    | `""` (the default repo's branch)
-`draft`       | `Boolean`   | `false`
-`prerelease`  | `Boolean`   | `false` (`true` if the version has a hyphen)
-`assets`      | `Seq[File]` | `Seq(<packageBin in Compile>)`
+Key             | Type        | Default value
+---------------:|:------------|:--------------------------------------------------------
+`notesDir`      | `File`      | `notes/`
+`notesFile`     | `File`      | `<notesDir>/<version>.markdown`
+`repo`          | `String`    | `"<organization>/<normalizedName>"`
+`tag`           | `String`    | `"v<version>"`
+`releaseName`   | `String`    | `"<name> <tag>"`
+`commitish`     | `String`    | `""` (the default repo's branch)
+`draft`         | `Boolean`   | `false`
+`prerelease`    | `Boolean`   | `false` (`true` if the version has a hyphen)
+`releaseAssets` | `Seq[File]` | `Seq(<packageBin in Compile>)`
 
 You can change them in your `build.sbt` for example
 
