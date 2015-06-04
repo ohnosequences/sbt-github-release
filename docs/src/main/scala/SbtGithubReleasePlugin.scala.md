@@ -21,7 +21,7 @@ object SbtGithubReleasePlugin extends AutoPlugin {
       lazy val commitish = settingKey[String]("Specifies the commitish value that determines where the Git tag is created from")
       lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
       lazy val prerelease = settingKey[Boolean]("true to identify the release as a prerelease. false to identify the release as a full release")
-      lazy val assets = taskKey[Seq[File]]("The files to upload")
+      lazy val releaseAssets = taskKey[Seq[File]]("The files to upload")
     }
 
     lazy val checkGithubCredentials = taskKey[GitHub]("Checks authentification and suggests to create a new oauth token if needed")
@@ -46,7 +46,7 @@ object SbtGithubReleasePlugin extends AutoPlugin {
     // a version containing a hyphen is a pre-release version 
     prerelease := version.value.matches(""".*-.*"""),
 
-    assets := Seq((packageBin in Compile).value),
+    releaseAssets := Seq((packageBin in Compile).value),
 
     checkGithubCredentials := {
       val log = streams.value.log
@@ -106,7 +106,7 @@ object SbtGithubReleasePlugin extends AutoPlugin {
         log.info(s"Github ${pre}release '${release.getName}' is ${pub} at\n  ${release.getHtmlUrl}")
       } else sys.error("Something went wrong with Github release")
 
-      assets.value foreach { asset =>
+      releaseAssets.value foreach { asset =>
         release.uploadAsset(asset, "application/zip")
         val rel = asset.relativeTo(baseDirectory.value).getOrElse(asset)
         log.info(s"Asset [${rel}] is uploaded to Github")
