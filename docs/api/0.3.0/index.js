@@ -1,0 +1,1 @@
+Index.PACKAGES = {"ohnosequences" : [], "ohnosequences.sbt" : [{"object" : "ohnosequences\/sbt\/SbtGithubReleasePlugin$.html", "name" : "ohnosequences.sbt.SbtGithubReleasePlugin"}], "sbt" : [], "sbt.serialization" : []};
