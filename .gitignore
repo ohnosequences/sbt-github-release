@@ -21,3 +21,11 @@ data/out/
 
 credentials.sbt
 *credentials*
+
+# IntelliJ IDEA
+*.iml
+.idea
+.idea/
+.idea_*
+.idea/*
+**/.idea/*
