@@ -12,13 +12,13 @@ object SbtGithubReleasePlugin extends AutoPlugin {
     // this object is just as a namespace:
     object GithubRelease {
       lazy val notesDir = settingKey[File]("Directory with release notes")
-      lazy val notesFile = settingKey[File]("File with the release notes for the current version")
+      lazy val notesFile = taskKey[File]("File with the release notes for the current version")
       lazy val repo = settingKey[String]("org/repo")
-      lazy val tag = settingKey[String]("The name of the tag: vX.Y.Z")
-      lazy val releaseName = settingKey[String]("The name of the release")
+      lazy val tag = taskKey[String]("The name of the tag: vX.Y.Z")
+      lazy val releaseName = taskKey[String]("The name of the release")
       lazy val commitish = settingKey[String]("Specifies the commitish value that determines where the Git tag is created from")
       lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
-      lazy val prerelease = settingKey[Boolean]("true to identify the release as a prerelease. false to identify the release as a full release")
+      lazy val prerelease = taskKey[Boolean]("true to identify the release as a prerelease. false to identify the release as a full release")
       lazy val releaseAssets = taskKey[Seq[File]]("The files to upload")
     }
 
@@ -40,8 +40,8 @@ object SbtGithubReleasePlugin extends AutoPlugin {
     releaseName := name.value +" "+ tag.value,
     commitish := "",
     draft := false,
-    // According to the Semantic Versioning Specification (rule 9) 
-    // a version containing a hyphen is a pre-release version 
+    // According to the Semantic Versioning Specification (rule 9)
+    // a version containing a hyphen is a pre-release version
     prerelease := version.value.matches(""".*-.*"""),
 
     releaseAssets := Seq((packageBin in Compile).value),
@@ -65,7 +65,7 @@ object SbtGithubReleasePlugin extends AutoPlugin {
           }
           case _ => sys.error("If you want to use sbt-github-release plugin, you should set credentials correctly")
         }
-      } 
+      }
       log.info("Github credentials are ok")
       GitHub.connect
     },
