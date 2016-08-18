@@ -1,16 +1,16 @@
 package ohnosequences.sbt
 
-import sbt._
-import Keys._
+import sbt._, Keys._
 
 import org.kohsuke.github._
 import scala.collection.JavaConversions._
+import scala.util.Try
 
-object SbtGithubReleasePlugin extends AutoPlugin {
+case object GithubRelease {
 
-  object autoImport {
+  case object keys {
     // this object is just as a namespace:
-    object GithubRelease {
+    case object GithubRelease {
       lazy val notesDir = settingKey[File]("Directory with release notes")
       lazy val notesFile = settingKey[File]("File with the release notes for the current version")
       lazy val repo = settingKey[String]("org/repo")
@@ -23,13 +23,91 @@ object SbtGithubReleasePlugin extends AutoPlugin {
     }
 
     lazy val checkGithubCredentials = taskKey[GitHub]("Checks authentification and suggests to create a new oauth token if needed")
+    lazy val ghreleaseGetRepo = taskKey[GHRepository]("Checks repo existence and returns it if it's fine")
+    lazy val ghreleaseGetReleaseBuilder = taskKey[GHReleaseBuilder]("Checks remote tag and returns empty release builder if everything is fine")
+
     lazy val releaseOnGithub = taskKey[GHRelease]("Publishes a release of Github")
   }
-  import autoImport._, GithubRelease._
 
+  case object defs {
+    import keys._, keys.GithubRelease._
+
+    def getReleaseBuilder(tagName: String) = Def.task {
+      val log = streams.value.log
+      val repo = ghreleaseGetRepo.value
+
+      val tagNames = repo.listTags.asSet.map(_.getName)
+      if (! tagNames.contains(tagName)) {
+        sys.error("Remote repository doesn't have [${tagName}] tag. You need to push it first.")
+      }
+
+      def releaseExists: Boolean =
+        repo.listReleases.asSet.map(_.getTagName).contains(tagName)
+
+      if (!draft.value && releaseExists) {
+        sys.error("There is already a Github release based on [${tagName}] tag. You cannot release it twice.")
+      }
+
+      repo.createRelease(tagName)
+    }
+
+    def releaseOnGithub = Def.taskDyn {
+      if (tag.value.endsWith("-SNAPSHOT"))
+        sys.error(s"Current version is '${version.value}'. You shouldn't publish snapshots, maybe you forgot to set the release version")
+
+      val log = streams.value.log
+
+      val text = IO.read(notesFile.value)
+      val notesPath = notesFile.value.relativeTo(baseDirectory.value).getOrElse(notesFile.value)
+      if (text.isEmpty) {
+        log.error(s"Release notes file [${notesPath}] is empty")
+        SimpleReader.readLine("Are you sure you want to continue without release notes (y/n)? [n] ") match {
+          case Some("n" | "N") => sys.error("Aborting release. Write release notes and try again")
+          case _ => // go on
+        }
+      } else log.info(s"Using release notes from the [${notesPath}] file")
+
+      val tagName = tag.value
+      Def.task {
+        val releaseBuilder = {
+          val rBuilder = getReleaseBuilder(tagName).value
+            .body(text)
+            .name(releaseName.value)
+            .draft(draft.value)
+            .prerelease(prerelease.value)
+
+          if (commitish.value.isEmpty) rBuilder
+          else rBuilder.commitish(commitish.value)
+        }
+
+        val release = Try { releaseBuilder.create } getOrElse {
+          sys.error("Couldn't create release")
+        }
+
+        val pre = if (prerelease.value) "pre-" else ""
+        val pub = if(draft.value) "saved as a draft" else "published"
+        log.info(s"Github ${pre}release '${release.getName}' is ${pub} at\n  ${release.getHtmlUrl}")
+
+        releaseAssets.value foreach { asset =>
+          release.uploadAsset(asset, "application/zip")
+          val rel = asset.relativeTo(baseDirectory.value).getOrElse(asset)
+          log.info(s"Asset [${rel}] is uploaded to Github")
+        }
+
+        release
+      }
+    }
+  }
+}
+
+object SbtGithubReleasePlugin extends AutoPlugin {
 
   // This plugin will load automatically
   override def trigger = allRequirements
+
+  val autoImport = GithubRelease.keys
+
+  import GithubRelease._, keys._, keys.GithubRelease._
 
   // Default settings
   override lazy val projectSettings = Seq[Setting[_]](
@@ -40,8 +118,8 @@ object SbtGithubReleasePlugin extends AutoPlugin {
     releaseName := name.value +" "+ tag.value,
     commitish := "",
     draft := false,
-    // According to the Semantic Versioning Specification (rule 9) 
-    // a version containing a hyphen is a pre-release version 
+    // According to the Semantic Versioning Specification (rule 9)
+    // a version containing a hyphen is a pre-release version
     prerelease := version.value.matches(""".*-.*"""),
 
     releaseAssets := Seq((packageBin in Compile).value),
@@ -65,53 +143,24 @@ object SbtGithubReleasePlugin extends AutoPlugin {
           }
           case _ => sys.error("If you want to use sbt-github-release plugin, you should set credentials correctly")
         }
-      } 
+      }
       log.info("Github credentials are ok")
       GitHub.connect
     },
 
-    releaseOnGithub := {
-      if (tag.value.endsWith("-SNAPSHOT"))
-        sys.error(s"Current version is '${version.value}'. You shouldn't publish snapshots, maybe you forgot to set the release version")
-
+    ghreleaseGetRepo := {
       val log = streams.value.log
-
-      val text = IO.read(notesFile.value)
-      val notesPath = notesFile.value.relativeTo(baseDirectory.value).getOrElse(notesFile.value)
-      if (text.isEmpty) {
-        log.error(s"Release notes file [${notesPath}] is empty")
-        SimpleReader.readLine("Are you sure you want to continue without release notes (y/n)? [n] ") match {
-          case Some("n" | "N") => sys.error("Aborting release. Write release notes and try again")
-          case _ => // go on
-        }
-      } else log.info(s"Using release notes from the [${notesPath}] file")
-
       val github = checkGithubCredentials.value
 
-      val release = {
-        val r = github.getRepository(repo.value).
-        createRelease(tag.value).
-        body(text).
-        name(releaseName.value).
-        draft(draft.value).
-        prerelease(prerelease.value)
-        if (commitish.value.isEmpty) r else r.commitish(commitish.value)
-      }.create
-
-      if (release != null) {
-        val pre = if (prerelease.value) "pre-" else ""
-        val pub = if(draft.value) "saved as a draft" else "published"
-        log.info(s"Github ${pre}release '${release.getName}' is ${pub} at\n  ${release.getHtmlUrl}")
-      } else sys.error("Something went wrong with Github release")
-
-      releaseAssets.value foreach { asset =>
-        release.uploadAsset(asset, "application/zip")
-        val rel = asset.relativeTo(baseDirectory.value).getOrElse(asset)
-        log.info(s"Asset [${rel}] is uploaded to Github")
+      val repository = Try { github.getRepository(repo.value) } getOrElse {
+        sys.error(s"Repository ${repo.value} doesn't exist or is not accessible.")
       }
+      repository
+    },
 
-      release
-    }
+    // ghreleaseGetReleaseBuilder := getReleaseBuilder.value,
+
+    releaseOnGithub := defs.releaseOnGithub.value
   )
 
 }
