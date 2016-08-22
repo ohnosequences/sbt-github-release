@@ -19,8 +19,7 @@ case object GithubRelease {
       lazy val commitish = settingKey[String]("Specifies the commitish value that determines where the Git tag is created from")
       lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
       lazy val prerelease = settingKey[Boolean]("true to identify the release as a prerelease. false to identify the release as a full release")
-      lazy val releaseAssets = taskKey[Map[Artifact, File]]("The artifact files to upload")
-      lazy val artifact2mime = taskKey[(Artifact, File)=> String]("Function mapping an artifact/file to a mime type")
+      lazy val releaseAssets = taskKey[Map[File, String]]("The artifact files to upload and their content mime type")
     }
 
     lazy val checkGithubCredentials = taskKey[GitHub]("Checks authentification and suggests to create a new oauth token if needed")
@@ -89,10 +88,7 @@ case object GithubRelease {
         val pub = if(draft.value) "saved as a draft" else "published"
         log.info(s"Github ${pre}release '${release.getName}' is ${pub} at\n  ${release.getHtmlUrl}")
 
-        val a2m = artifact2mime.value
-
-        releaseAssets.value foreach { case (artifact, asset) =>
-          val mime = a2m(artifact, asset)
+        releaseAssets.value foreach { case (asset, mime) =>
           release.uploadAsset(asset, mime)
           val rel = asset.relativeTo(baseDirectory.value).getOrElse(asset)
           log.info(s"Asset [${rel}] is uploaded to Github as $mime")
@@ -100,10 +96,6 @@ case object GithubRelease {
 
         release
       }
-    }
-
-    def artifact2mimeType(a: Artifact, f: File): String = {
-      java.nio.file.Files.probeContentType(f.toPath)
     }
   }
 }
@@ -130,9 +122,9 @@ object SbtGithubReleasePlugin extends AutoPlugin {
     // a version containing a hyphen is a pre-release version
     prerelease := version.value.matches(""".*-.*"""),
 
-    releaseAssets := packagedArtifacts.value,
-
-    artifact2mime := defs.artifact2mimeType,
+    releaseAssets := packagedArtifacts.value.map { case (_, file) =>
+      file -> java.nio.file.Files.probeContentType(file.toPath)
+    },
 
     checkGithubCredentials := {
       val log = streams.value.log
