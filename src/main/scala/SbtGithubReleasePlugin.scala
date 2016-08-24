@@ -19,7 +19,7 @@ case object GithubRelease {
       lazy val commitish = settingKey[String]("Specifies the commitish value that determines where the Git tag is created from")
       lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
       lazy val prerelease = settingKey[Boolean]("true to identify the release as a prerelease. false to identify the release as a full release")
-      lazy val releaseAssets = taskKey[Seq[File]]("The files to upload")
+      lazy val releaseAssets = taskKey[Map[File, String]]("The artifact files to upload and their content mime type")
     }
 
     lazy val checkGithubCredentials = taskKey[GitHub]("Checks authentification and suggests to create a new oauth token if needed")
@@ -88,10 +88,10 @@ case object GithubRelease {
         val pub = if(draft.value) "saved as a draft" else "published"
         log.info(s"Github ${pre}release '${release.getName}' is ${pub} at\n  ${release.getHtmlUrl}")
 
-        releaseAssets.value foreach { asset =>
-          release.uploadAsset(asset, "application/zip")
+        releaseAssets.value foreach { case (asset, mime) =>
+          release.uploadAsset(asset, mime)
           val rel = asset.relativeTo(baseDirectory.value).getOrElse(asset)
-          log.info(s"Asset [${rel}] is uploaded to Github")
+          log.info(s"Asset [${rel}] is uploaded to Github as $mime")
         }
 
         release
@@ -122,7 +122,9 @@ object SbtGithubReleasePlugin extends AutoPlugin {
     // a version containing a hyphen is a pre-release version
     prerelease := version.value.matches(""".*-.*"""),
 
-    releaseAssets := Seq((packageBin in Compile).value),
+    releaseAssets := packagedArtifacts.value.map { case (_, file) =>
+      file -> java.nio.file.Files.probeContentType(file.toPath)
+    },
 
     checkGithubCredentials := {
       val log = streams.value.log
