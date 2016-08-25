@@ -128,9 +128,9 @@ object SbtGithubReleasePlugin extends AutoPlugin {
     mediaTypesMap := {
       val typeMap = new javax.activation.MimetypesFileTypeMap()
       // NOTE: github doesn't know about application/java-archive type (see https://developer.github.com/v3/repos/releases/#input-2)
-      typeMap.addMimeTypes("application/zip jar")
+      typeMap.addMimeTypes("application/zip jar zip")
       // and .pom is unlikely to be in the system's default MIME types map
-      typeMap.addMimeTypes("application/xml pom")
+      typeMap.addMimeTypes("application/xml pom xml")
 
       typeMap.getContentType
     },
