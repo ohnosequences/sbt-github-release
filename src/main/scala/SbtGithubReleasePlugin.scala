@@ -19,7 +19,8 @@ case object GithubRelease {
       lazy val commitish = settingKey[String]("Specifies the commitish value that determines where the Git tag is created from")
       lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
       lazy val prerelease = settingKey[Boolean]("true to identify the release as a prerelease. false to identify the release as a full release")
-      lazy val releaseAssets = taskKey[Map[File, String]]("The artifact files to upload and their content mime type")
+      lazy val mediaTypesMap = settingKey[File => String]("This function will determine media type for the assets")
+      lazy val releaseAssets = taskKey[Seq[File]]("The artifact files to upload")
     }
 
     lazy val checkGithubCredentials = taskKey[GitHub]("Checks authentification and suggests to create a new oauth token if needed")
@@ -88,10 +89,12 @@ case object GithubRelease {
         val pub = if(draft.value) "saved as a draft" else "published"
         log.info(s"Github ${pre}release '${release.getName}' is ${pub} at\n  ${release.getHtmlUrl}")
 
-        releaseAssets.value foreach { case (asset, mime) =>
-          release.uploadAsset(asset, mime)
+        releaseAssets.value foreach { asset =>
+          val mediaType = mediaTypesMap.value(asset)
           val rel = asset.relativeTo(baseDirectory.value).getOrElse(asset)
-          log.info(s"Asset [${rel}] is uploaded to Github as $mime")
+
+          release.uploadAsset(asset, mediaType)
+          log.info(s"Asset [${rel}] is uploaded to Github as ${mediaType}")
         }
 
         release
@@ -122,9 +125,17 @@ object SbtGithubReleasePlugin extends AutoPlugin {
     // a version containing a hyphen is a pre-release version
     prerelease := version.value.matches(""".*-.*"""),
 
-    releaseAssets := packagedArtifacts.value.map { case (_, file) =>
-      file -> java.nio.file.Files.probeContentType(file.toPath)
+    mediaTypesMap := {
+      val typeMap = new javax.activation.MimetypesFileTypeMap()
+      // NOTE: github doesn't know about application/java-archive type (see https://developer.github.com/v3/repos/releases/#input-2)
+      typeMap.addMimeTypes("application/zip jar zip")
+      // and .pom is unlikely to be in the system's default MIME types map
+      typeMap.addMimeTypes("application/xml pom xml")
+
+      typeMap.getContentType
     },
+
+    releaseAssets := packagedArtifacts.value.values.toSeq,
 
     checkGithubCredentials := {
       val log = streams.value.log
