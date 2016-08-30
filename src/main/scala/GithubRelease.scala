@@ -27,7 +27,7 @@ case object GithubRelease {
     lazy val ghreleaseCheckRepo = taskKey[GHRepository]("Checks repo existence and returns it if it's fine")
     lazy val ghreleaseCheckReleaseBuilder = taskKey[GHReleaseBuilder]("Checks remote tag and returns empty release builder if everything is fine")
 
-    lazy val releaseOnGithub = taskKey[GHRelease]("Publishes a release of Github")
+    lazy val githubRelease = taskKey[GHRelease]("Publishes a release of Github")
   }
 
   case object defs {
@@ -53,7 +53,7 @@ case object GithubRelease {
       repo.createRelease(tagName)
     }
 
-    def releaseOnGithub = Def.taskDyn {
+    def githubRelease = Def.taskDyn {
       if (isSnapshot.value) {
         sys.error(s"Current version is '${version.value}'. You shouldn't publish snapshots, maybe you forgot to set the release version")
       }

@@ -23,10 +23,9 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
     ghreleaseTag       := "v"+version.value,
     ghreleaseTitle     := name.value +" "+ ghreleaseTag.value,
     ghreleaseCommitish := "",
-    draft := false,
     // According to the Semantic Versioning Specification (rule 9)
     // a version containing a hyphen is a pre-release version
-    prerelease := version.value.matches(""".*-.*"""),
+    ghreleaseIsPrerelease := { _.matches(""".*-.*""") },
 
     ghreleaseMediaTypesMap := {
       val typeMap = new javax.activation.MimetypesFileTypeMap()
@@ -77,7 +76,7 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
 
     // ghreleaseCheckReleaseBuilder := getReleaseBuilder.value,
 
-    releaseOnGithub := defs.releaseOnGithub.value
+    githubRelease := defs.githubRelease.value
   )
 
 }
