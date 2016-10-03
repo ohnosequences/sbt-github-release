@@ -46,6 +46,8 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
       )
     }
 
-    (Space ~> suggestions.getOrElse(StringBasic)) ?? version.value
+    val fallback = s"v${version.value}"
+
+    (Space ~> suggestions.getOrElse(StringBasic)) ?? fallback
   }
 }
