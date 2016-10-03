@@ -5,6 +5,7 @@ import sbt._, Keys._
 import org.kohsuke.github._
 import scala.collection.JavaConversions._
 import scala.util.Try
+import sbt._, Keys._, complete._, DefaultParsers._
 
 case object SbtGithubReleasePlugin extends AutoPlugin {
 
@@ -39,7 +40,7 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
 
     ghreleaseAssets := packagedArtifacts.value.values.toSeq,
 
-    ghreleaseCheckCredentials := {
+    ghreleaseGetCredentials := {
       val log = streams.value.log
       val conf = file(System.getProperty("user.home")) / ".github"
       while (!conf.exists || !GitHub.connect.isCredentialValid) {
@@ -63,9 +64,9 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
       GitHub.connect
     },
 
-    ghreleaseCheckRepo := {
+    ghreleaseGetRepo := {
       val log = streams.value.log
-      val github = ghreleaseCheckCredentials.value
+      val github = ghreleaseGetCredentials.value
       val repo = s"${ghreleaseRepoOrg.value}/${ghreleaseRepoName.value}"
 
       val repository = Try { github.getRepository(repo) } getOrElse {
@@ -74,9 +75,17 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
       repository
     },
 
-    // ghreleaseCheckReleaseBuilder := getReleaseBuilder.value,
+    ghreleaseGetReleaseBuilder := Def.inputTaskDyn {
+      defs.ghreleaseGetReleaseBuilder(tagNameArg.parsed)
+    }.evaluated,
 
-    githubRelease := defs.githubRelease.value
+    githubRelease := Def.inputTaskDyn {
+      defs.githubRelease(tagNameArg.parsed)
+    }.evaluated
   )
 
+  def tagNameArg: Parser[String] = {
+    // TODO: suggest existing local git tags
+    Space ~> StringBasic
+  }
 }

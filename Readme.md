@@ -57,7 +57,7 @@ The main task is `githubRelease`, it creates the release and publishes the asses
 
 There are some other tasks which work as intermediate checks:
 
-* `ghreleaseCheckCredentials` — checks Github OAuth token and helps to set it if needed
+* `ghreleaseGetCredentials` — checks Github OAuth token and helps to set it if needed
 * `ghreleaseCheckRepo` — checks that the repository exists and is accessible
 * `ghreleaseCheckReleaseBuilder` — checks that Github repo contains the tag and there is no release based on it yet
 

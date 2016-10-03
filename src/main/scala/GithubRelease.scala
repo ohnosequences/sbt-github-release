@@ -12,7 +12,7 @@ case object GithubRelease {
     lazy val ghreleaseNotes         = settingKey[File]("File with the release notes for the current version")
     lazy val ghreleaseRepoOrg       = settingKey[String]("Github repository organization")
     lazy val ghreleaseRepoName      = settingKey[String]("Github repository name")
-    lazy val ghreleaseTag           = settingKey[String]("The name of the Git tag")
+    lazy val ghreleaseTag           = settingKey[String]("The Git tag you want to release")
     lazy val ghreleaseTitle         = settingKey[String]("The title of the release")
     lazy val ghreleaseCommitish     = settingKey[String]("Specifies the commitish value that determines where the Git tag is created from")
     lazy val ghreleaseMediaTypesMap = settingKey[File => String]("This function will determine media type for the assets")
@@ -23,19 +23,20 @@ case object GithubRelease {
     // TODO: remove this, make them tasks or parameters for the main task
     // lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
 
-    lazy val ghreleaseCheckCredentials = taskKey[GitHub]("Checks authentification and suggests to create a new oauth token if needed")
-    lazy val ghreleaseCheckRepo = taskKey[GHRepository]("Checks repo existence and returns it if it's fine")
-    lazy val ghreleaseCheckReleaseBuilder = taskKey[GHReleaseBuilder]("Checks remote tag and returns empty release builder if everything is fine")
+    lazy val ghreleaseGetCredentials = taskKey[GitHub]("Checks authentification and suggests to create a new oauth token if needed")
+    lazy val ghreleaseGetRepo        = taskKey[GHRepository]("Checks repo existence and returns it if it's fine")
 
-    lazy val githubRelease = taskKey[GHRelease]("Publishes a release of Github")
+    lazy val ghreleaseGetReleaseBuilder = inputKey[GHReleaseBuilder]("Checks remote tag and returns empty release builder if everything is fine")
+
+    lazy val githubRelease = inputKey[GHRelease]("Publishes a release of Github")
   }
 
   case object defs {
     import keys._
 
-    def getReleaseBuilder(tagName: String) = Def.task {
+    def ghreleaseGetReleaseBuilder(tagName: String) = Def.task {
       val log = streams.value.log
-      val repo = ghreleaseCheckRepo.value
+      val repo = ghreleaseGetRepo.value
 
       val tagNames = repo.listTags.asSet.map(_.getName)
       if (! tagNames.contains(tagName)) {
@@ -48,16 +49,13 @@ case object GithubRelease {
       // if (!draft.value && releaseExists) {
       if (releaseExists) {
         sys.error("There is already a Github release based on [${tagName}] tag. You cannot release it twice.")
+        // TODO: ask to overwrite (+ report if it is a draft)
       }
 
       repo.createRelease(tagName)
     }
 
-    def githubRelease = Def.taskDyn {
-      if (isSnapshot.value) {
-        sys.error(s"Current version is '${version.value}'. You shouldn't publish snapshots, maybe you forgot to set the release version")
-      }
-
+    def githubRelease(tagName: String) = Def.taskDyn {
       val log = streams.value.log
 
       val text = IO.read(ghreleaseNotes.value)
@@ -70,12 +68,11 @@ case object GithubRelease {
         }
       } else log.info(s"Using release notes from the [${notesPath}] file")
 
-      val tagName = ghreleaseTag.value
       val isPre = ghreleaseIsPrerelease.value(tagName)
 
       Def.task {
         val releaseBuilder = {
-          val rBuilder = getReleaseBuilder(tagName).value
+          val rBuilder = ghreleaseGetReleaseBuilder(tagName).value
             .body(text)
             .name(ghreleaseTitle.value)
             .prerelease(isPre)
