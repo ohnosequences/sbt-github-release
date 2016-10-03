@@ -8,14 +8,14 @@ import scala.util.Try
 
 case object GithubRelease {
 
+  type DefTask[X] = Def.Initialize[Task[X]]
+
   case object keys {
     lazy val ghreleaseNotes         = settingKey[File]("File with the release notes for the current version")
     lazy val ghreleaseRepoOrg       = settingKey[String]("Github repository organization")
     lazy val ghreleaseRepoName      = settingKey[String]("Github repository name")
-    lazy val ghreleaseTag           = settingKey[String]("The Git tag you want to release")
-    lazy val ghreleaseTitle         = settingKey[String]("The title of the release")
-    lazy val ghreleaseCommitish     = settingKey[String]("Specifies the commitish value that determines where the Git tag is created from")
     lazy val ghreleaseMediaTypesMap = settingKey[File => String]("This function will determine media type for the assets")
+    lazy val ghreleaseTitle         = settingKey[String => String]("The title of the release")
     lazy val ghreleaseIsPrerelease  = settingKey[String => Boolean]("A function to determine release as a prerelease based on the tag name")
 
     lazy val ghreleaseAssets        = taskKey[Seq[File]]("The artifact files to upload")
@@ -34,7 +34,18 @@ case object GithubRelease {
   case object defs {
     import keys._
 
-    def ghreleaseGetReleaseBuilder(tagName: String) = Def.task {
+    def ghreleaseGetRepo: DefTask[GHRepository] = Def.task {
+      val log = streams.value.log
+      val github = ghreleaseGetCredentials.value
+      val repo = s"${ghreleaseRepoOrg.value}/${ghreleaseRepoName.value}"
+
+      val repository = Try { github.getRepository(repo) } getOrElse {
+        sys.error(s"Repository ${repo} doesn't exist or is not accessible.")
+      }
+      repository
+    }
+
+    def ghreleaseGetReleaseBuilder(tagName: String): DefTask[GHReleaseBuilder] = Def.task {
       val log = streams.value.log
       val repo = ghreleaseGetRepo.value
 
@@ -55,7 +66,7 @@ case object GithubRelease {
       repo.createRelease(tagName)
     }
 
-    def githubRelease(tagName: String) = Def.taskDyn {
+    def githubRelease(tagName: String): DefTask[GHRelease] = Def.taskDyn {
       val log = streams.value.log
 
       val text = IO.read(ghreleaseNotes.value)
@@ -71,16 +82,10 @@ case object GithubRelease {
       val isPre = ghreleaseIsPrerelease.value(tagName)
 
       Def.task {
-        val releaseBuilder = {
-          val rBuilder = ghreleaseGetReleaseBuilder(tagName).value
-            .body(text)
-            .name(ghreleaseTitle.value)
-            .prerelease(isPre)
-            // .draft(draft.value)
-
-          if (ghreleaseCommitish.value.isEmpty) rBuilder
-          else rBuilder.commitish(ghreleaseCommitish.value)
-        }
+        val releaseBuilder = ghreleaseGetReleaseBuilder(tagName).value
+          .body(text)
+          .name(ghreleaseTitle.value(tagName))
+          .prerelease(isPre)
 
         val release = Try { releaseBuilder.create } getOrElse {
           sys.error("Couldn't create release")

@@ -21,9 +21,7 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
     ghreleaseNotes     := baseDirectory.value / "notes" / (version.value+".markdown"),
     ghreleaseRepoOrg   := organization.value,
     ghreleaseRepoName  := name.value,
-    ghreleaseTag       := "v"+version.value,
-    ghreleaseTitle     := name.value +" "+ ghreleaseTag.value,
-    ghreleaseCommitish := "",
+    ghreleaseTitle     := { tagName => s"${name.value} ${tagName}" },
     // According to the Semantic Versioning Specification (rule 9)
     // a version containing a hyphen is a pre-release version
     ghreleaseIsPrerelease := { _.matches(""".*-.*""") },
