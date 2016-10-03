@@ -89,7 +89,7 @@ case object GithubRelease {
 
       val tagNames = repo.listTags.asSet.map(_.getName)
       if (! tagNames.contains(tagName)) {
-        sys.error("Remote repository doesn't have [${tagName}] tag. You need to push it first.")
+        sys.error(s"Remote repository doesn't have [${tagName}] tag. You need to push it first.")
       }
 
       def releaseExists: Boolean =
@@ -97,7 +97,7 @@ case object GithubRelease {
 
       // if (!draft.value && releaseExists) {
       if (releaseExists) {
-        sys.error("There is already a Github release based on [${tagName}] tag. You cannot release it twice.")
+        sys.error(s"There is already a Github release based on [${tagName}] tag. You cannot release it twice.")
         // TODO: ask to overwrite (+ report if it is a draft)
       }
 
