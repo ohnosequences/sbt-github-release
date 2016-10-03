@@ -14,7 +14,7 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
 
   // Default settings
   override lazy val projectSettings = Seq[Setting[_]](
-    ghreleaseNotes     := baseDirectory.value / "notes" / (version.value+".markdown"),
+    ghreleaseNotes     := { tagName => IO.read(baseDirectory.value / "notes" / s"${tagName}.markdown") },
     ghreleaseRepoOrg   := organization.value,
     ghreleaseRepoName  := name.value,
     ghreleaseTitle     := { tagName => s"${name.value} ${tagName}" },

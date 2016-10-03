@@ -12,12 +12,14 @@ case object GithubRelease {
   type DefSetting[X] = Def.Initialize[Setting[X]]
 
   case object keys {
-    lazy val ghreleaseNotes         = settingKey[File]("File with the release notes for the current version")
+    type TagName = String
+
     lazy val ghreleaseRepoOrg       = settingKey[String]("Github repository organization")
     lazy val ghreleaseRepoName      = settingKey[String]("Github repository name")
     lazy val ghreleaseMediaTypesMap = settingKey[File => String]("This function will determine media type for the assets")
-    lazy val ghreleaseTitle         = settingKey[String => String]("The title of the release")
-    lazy val ghreleaseIsPrerelease  = settingKey[String => Boolean]("A function to determine release as a prerelease based on the tag name")
+    lazy val ghreleaseNotes         = settingKey[TagName => String]("Release notes for the given tag")
+    lazy val ghreleaseTitle         = settingKey[TagName => String]("The title of the release")
+    lazy val ghreleaseIsPrerelease  = settingKey[TagName => Boolean]("A function to determine release as a prerelease based on the tag name")
 
     lazy val ghreleaseAssets        = taskKey[Seq[File]]("The artifact files to upload")
 
@@ -105,21 +107,20 @@ case object GithubRelease {
     def githubRelease(tagName: String): DefTask[GHRelease] = Def.taskDyn {
       val log = streams.value.log
 
-      val text = IO.read(ghreleaseNotes.value)
-      val notesPath = ghreleaseNotes.value.relativeTo(baseDirectory.value).getOrElse(ghreleaseNotes.value)
-      if (text.isEmpty) {
-        log.error(s"Release notes file [${notesPath}] is empty")
+      val notes = ghreleaseNotes.value(tagName)
+      if (notes.isEmpty) {
+        log.warn(s"Release notes are empty")
         SimpleReader.readLine("Are you sure you want to continue without release notes (y/n)? [n] ") match {
-          case Some("n" | "N") => sys.error("Aborting release. Write release notes and try again")
+          case Some("n" | "N") => sys.error("Aborting release due to empty release notes")
           case _ => // go on
         }
-      } else log.info(s"Using release notes from the [${notesPath}] file")
+      }
 
       val isPre = ghreleaseIsPrerelease.value(tagName)
 
       Def.task {
         val releaseBuilder = ghreleaseGetReleaseBuilder(tagName).value
-          .body(text)
+          .body(notes)
           .name(ghreleaseTitle.value(tagName))
           .prerelease(isPre)
 

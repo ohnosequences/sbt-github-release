@@ -11,3 +11,5 @@ libraryDependencies += "org.kohsuke" % "github-api" % "1.77"
 
 // libraryDependencies += "com.github.xuwei-k" %% "ghscala" % "0.2.14"
 wartremoverErrors in (Compile, compile) --= Seq(Wart.Any, Wart.NonUnitStatements)
+
+enablePlugins(SbtGithubReleasePlugin)
