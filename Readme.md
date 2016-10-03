@@ -38,7 +38,7 @@ addSbtPlugin("ohnosequences" % "sbt-github-release" % "<version>")
 | `ghreleaseMediaTypesMap` | `File => String`     | A function to determine media type for the assets     |
 
 
-You can find their defaults in the plugin [code](src/main/scala/SbtGithubReleasePlugin.scala.md).
+You can find their defaults in the plugin [code](src/main/scala/SbtGithubReleasePlugin.scala).
 
 
 #### Assets
