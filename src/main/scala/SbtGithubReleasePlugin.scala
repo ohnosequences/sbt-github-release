@@ -1,11 +1,9 @@
 package ohnosequences.sbt
 
-import sbt._, Keys._
-
-import org.kohsuke.github._
-import scala.collection.JavaConversions._
-import scala.util.Try
 import sbt._, Keys._, complete._, DefaultParsers._
+import org.kohsuke.github._
+import scala.util.Try
+import GithubRelease._, keys._
 
 case object SbtGithubReleasePlugin extends AutoPlugin {
 
@@ -13,8 +11,6 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
   override def trigger = allRequirements
 
   val autoImport = GithubRelease.keys
-
-  import GithubRelease._, keys._
 
   // Default settings
   override lazy val projectSettings = Seq[Setting[_]](
@@ -39,8 +35,17 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
     }.evaluated
   )
 
-  def tagNameArg: Parser[String] = {
-    // TODO: suggest existing local git tags
-    Space ~> StringBasic
+  def tagNameArg: Def.Initialize[Parser[String]] = Def.setting {
+    val gitOut: Try[String] = Try {
+      sys.process.Process(Seq("git", "tag", "--list"), baseDirectory.value).!!
+    }
+
+    val suggestions: Try[Parser[String]] = gitOut.map { out =>
+      oneOf(
+        out.split('\n').map { tag => token(tag.trim) }
+      )
+    }
+
+    (Space ~> suggestions.getOrElse(StringBasic)) ?? version.value
   }
 }
