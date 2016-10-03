@@ -9,6 +9,7 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
 
   // This plugin will load automatically
   override def trigger = allRequirements
+  override def requires = empty
 
   val autoImport = GithubRelease.keys
 
