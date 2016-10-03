@@ -6,7 +6,7 @@
 [![](https://img.shields.io/badge/license-AGPLv3-blue.svg)](https://tldrlegal.com/license/gnu-affero-general-public-license-v3-%28agpl-3.0%29)
 [![](https://img.shields.io/badge/contact-gitter_chat-dd1054.svg)](https://gitter.im/ohnosequences/sbt-github-release)
 
-This is a simple sbt-plugin for creating [Github releases](https://github.com/blog/1547-release-your-software) with proper release notes and optional artifact uploading. It can be useful as a part of an automated release process.
+This is a simple sbt-plugin for creating [Github releases](https://github.com/blog/1547-release-your-software) with proper release notes and optional artifact uploading. It can be useful as a part of an [automated release process](https://github.com/ohnosequences/nice-sbt-settings).
 
 
 ## Usage
@@ -17,6 +17,7 @@ To start using this plugin add the following to the `project/plugins.sbt`:
 
 ```scala
 resolvers += "Era7 maven releases" at "https://s3-eu-west-1.amazonaws.com/releases.era7.com"
+resolvers += "Jenkins repo" at "http://repo.jenkins-ci.org/public/"
 
 addSbtPlugin("ohnosequences" % "sbt-github-release" % "<version>")
 ```
@@ -26,18 +27,18 @@ addSbtPlugin("ohnosequences" % "sbt-github-release" % "<version>")
 
 ### Setting keys
 
-Most of these keys just reflect the parameters from the [Github API](http://developer.github.com/v3/repos/releases/#create-a-release):
+| Key                      | Type                 | Short description                                     |
+|:-------------------------|:---------------------|:------------------------------------------------------|
+| `ghreleaseRepoOrg`       | `String`             | Github repository organization                        |
+| `ghreleaseRepoName`      | `String`             | Github repository name                                |
+| `ghreleaseNotes`         | `TagName => String`  | Release notes for the given tag                       |
+| `ghreleaseTitle`         | `TagName => String`  | The title of the release                              |
+| `ghreleaseIsPrerelease`  | `TagName => Boolean` | A function to determine release as a prerelease based |
+| `ghreleaseAssets`        | `Seq[File]`          | The artifact files to upload                          |
+| `ghreleaseMediaTypesMap` | `File => String`     | A function to determine media type for the assets     |
 
-| Key                      | Type                | Default value                                      |
-|:-------------------------|:--------------------|:---------------------------------------------------|
-| `ghreleaseNotes`         | `File`              | `notes/<version>.markdown`                         |
-| `ghreleaseRepoOrg`       | `String`            | `<organization>`                                   |
-| `ghreleaseRepoName`      | `String`            | `<name>`                                           |
-| `ghreleaseTag`           | `String`            | `"v<version>"`                                     |
-| `ghreleaseTitle`         | `String`            | `"<name> <tag>"`                                   |
-| `ghreleaseCommitish`     | `String`            | `""` (the default repo's branch)                   |
-| `ghreleaseIsPrerelease`  | `String => Boolean` | `true` if the string (tag) contains a hyphen       |
-| `ghreleaseMediaTypesMap` | `File => String`    | [media types map](#assets) for the asset artifacts |
+
+You can find their defaults in the plugin [code](src/main/scala/SbtGithubReleasePlugin.scala.md).
 
 
 #### Assets
@@ -58,8 +59,8 @@ The main task is `githubRelease`, it creates the release and publishes the asses
 There are some other tasks which work as intermediate checks:
 
 * `ghreleaseGetCredentials` — checks Github OAuth token and helps to set it if needed
-* `ghreleaseCheckRepo` — checks that the repository exists and is accessible
-* `ghreleaseCheckReleaseBuilder` — checks that Github repo contains the tag and there is no release based on it yet
+* `ghreleaseGetRepo` — checks that the repository exists and is accessible
+* `ghreleaseGetReleaseBuilder` — checks that Github repo contains the tag and there is no release based on it yet
 
 
 ### Credentials
@@ -71,9 +72,3 @@ oauth = 623454b0sd3645bdfdes541dd1fdg34504a8cXXX
 ```
 
 But you don't need to create this file manually — when running `githubRelease`, plugin checks it and if there is no valid token, asks you to go and create one and then saves it.
-
-<!--
-### Integration with sbt-release
-
-See how it's done in the [nice-sbt-settings](https://github.com/ohnosequences/nice-sbt-settings/blob/master/src/main/scala/ReleaseSettings.scala#L277-L290) plugin for an example.
- -->
