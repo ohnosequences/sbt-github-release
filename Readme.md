@@ -1,4 +1,5 @@
 ## Sbt Github release plugin
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/ohnosequences/sbt-github-release?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 [![](https://travis-ci.org/ohnosequences/sbt-github-release.svg?branch=master)](https://travis-ci.org/ohnosequences/sbt-github-release)
 [![](https://img.shields.io/codacy/811d530bf7d548ed8bcbb506f7490bef.svg)](https://www.codacy.com/app/ohnosequences/sbt-github-release)
