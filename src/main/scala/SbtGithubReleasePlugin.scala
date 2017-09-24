@@ -1,7 +1,6 @@
 package ohnosequences.sbt
 
 import sbt._, Keys._, complete._, DefaultParsers._
-import org.kohsuke.github._
 import scala.util.Try
 import GithubRelease._, keys._
 
