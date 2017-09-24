@@ -2,7 +2,8 @@
 
 [![](https://travis-ci.org/ohnosequences/sbt-github-release.svg?branch=master)](https://travis-ci.org/ohnosequences/sbt-github-release)
 [![](https://img.shields.io/codacy/811d530bf7d548ed8bcbb506f7490bef.svg)](https://www.codacy.com/app/ohnosequences/sbt-github-release)
-[![](http://github-release-version.herokuapp.com/github/ohnosequences/sbt-github-release/release.svg)](https://github.com/ohnosequences/sbt-github-release/releases/latest)
+[![](http://img.shields.io/bintray/v/ohnosequences/sbt-plugins/sbt-github-release.svg)](https://bintray.com/ohnosequences/sbt-plugins/sbt-github-release/_latestVersion)
+[![](http://img.shields.io/github/release/ohnosequences/sbt-github-release/all.svg)](https://github.com/ohnosequences/sbt-github-release/releases/latest)
 [![](https://img.shields.io/badge/license-AGPLv3-blue.svg)](https://tldrlegal.com/license/gnu-affero-general-public-license-v3-%28agpl-3.0%29)
 [![](https://img.shields.io/badge/contact-gitter_chat-dd1054.svg)](https://gitter.im/ohnosequences/sbt-github-release)
 
@@ -16,13 +17,13 @@ This is a simple sbt-plugin for creating [Github releases](https://github.com/bl
 To start using this plugin add the following to the `project/plugins.sbt`:
 
 ```scala
-resolvers += "Era7 maven releases" at "https://s3-eu-west-1.amazonaws.com/releases.era7.com"
 resolvers += "Jenkins repo" at "http://repo.jenkins-ci.org/public/"
-
 addSbtPlugin("ohnosequences" % "sbt-github-release" % "<version>")
 ```
 
-> **Note:** you should use sbt `v0.13.+`
+(see the latest release version on the badge above)
+
+> Note that since `v0.5.0` this plugin is compiled and published _only_ for **sbt-1.0**. If you need it for sbt-0.13, use [`v0.4.0`](https://github.com/ohnosequences/sbt-github-release/tree/v0.4.0).
 
 
 ### Setting keys
