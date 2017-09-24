@@ -9,6 +9,7 @@ sbtVersion   := "1.0.2"
 
 bucketSuffix := "era7.com"
 
+resolvers += "Github-API" at "http://repo.jenkins-ci.org/public/"
 libraryDependencies += "org.kohsuke" % "github-api" % "1.89"
 
 libraryDependencies := libraryDependencies.value
