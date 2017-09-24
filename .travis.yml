@@ -1,7 +1,7 @@
 # http://www.scala-sbt.org/0.13/docs/Travis-CI-with-sbt.html
 language: scala
 scala:
-  - 2.10.6
+  - 2.12.3
 jdk:
   - oraclejdk8
 script:
