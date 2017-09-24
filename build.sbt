@@ -16,3 +16,10 @@ libraryDependencies := libraryDependencies.value
   .filterNot { _.name == "scalatest" }
 
 wartremoverErrors in (Compile, compile) --= Seq(Wart.Any, Wart.NonUnitStatements)
+
+bintrayReleaseOnPublish := !isSnapshot.value
+bintrayOrganization     := Some(organization.value)
+bintrayPackageLabels    := Seq("sbt", "sbt-plugin", "github", "releases", "publish")
+
+publishMavenStyle := false
+publishTo := (publishTo in bintray).value
