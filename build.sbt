@@ -14,6 +14,8 @@ libraryDependencies += "org.kohsuke" % "github-api" % "1.89"
 
 libraryDependencies := libraryDependencies.value
   .filterNot { _.name == "scalatest" }
+  
+sourceGenerators in Test := Seq()
 
 wartremoverErrors in (Compile, compile) --= Seq(Wart.Any, Wart.NonUnitStatements)
 
