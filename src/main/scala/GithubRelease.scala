@@ -3,7 +3,7 @@ package ohnosequences.sbt
 import sbt._, Keys._
 
 import org.kohsuke.github._
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 case object GithubRelease {
@@ -73,27 +73,26 @@ case object GithubRelease {
     }
 
     def ghreleaseGetRepo: DefTask[GHRepository] = Def.task {
-      val log = streams.value.log
       val github = ghreleaseGetCredentials.value
       val repo = s"${ghreleaseRepoOrg.value}/${ghreleaseRepoName.value}"
 
-      val repository = Try { github.getRepository(repo) } getOrElse {
+      Try {
+        github.getRepository(repo)
+      } getOrElse {
         sys.error(s"Repository ${repo} doesn't exist or is not accessible.")
       }
-      repository
     }
 
     def ghreleaseGetReleaseBuilder(tagName: String): DefTask[GHReleaseBuilder] = Def.task {
-      val log = streams.value.log
       val repo = ghreleaseGetRepo.value
 
-      val tagNames = repo.listTags.asSet.map(_.getName)
+      val tagNames = repo.listTags.asScala.map(_.getName).toSet
       if (! tagNames.contains(tagName)) {
         sys.error(s"Remote repository doesn't have [${tagName}] tag. You need to push it first.")
       }
 
       def releaseExists: Boolean =
-        repo.listReleases.asSet.map(_.getTagName).contains(tagName)
+        repo.listReleases.asScala.map(_.getTagName).toSet.contains(tagName)
 
       // if (!draft.value && releaseExists) {
       if (releaseExists) {
