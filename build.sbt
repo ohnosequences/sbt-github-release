@@ -9,7 +9,7 @@ sbtVersion   := "1.0.2"
 
 bucketSuffix := "era7.com"
 
-libraryDependencies += "org.kohsuke" % "github-api" % "1.77"
+libraryDependencies += "org.kohsuke" % "github-api" % "1.89"
 
 libraryDependencies := libraryDependencies.value
   .filterNot { _.name == "scalatest" }
