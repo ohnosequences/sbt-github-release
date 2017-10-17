@@ -1,10 +1,19 @@
 package ohnosequences.sbt
 
-import sbt._, Keys._
-
 import org.kohsuke.github._
+import sbt.Keys._
+import sbt._
+
 import scala.collection.JavaConverters._
 import scala.util.Try
+
+
+sealed trait GitHubCredentials
+
+final case class GitHubToken(token: String) extends GitHubCredentials
+
+final case class GitHubLogin(login: String,
+                             password: String) extends GitHubCredentials
 
 case object GithubRelease {
 
@@ -14,20 +23,20 @@ case object GithubRelease {
   case object keys {
     type TagName = String
 
-    lazy val ghreleaseRepoOrg       = settingKey[String]("Github repository organization")
-    lazy val ghreleaseRepoName      = settingKey[String]("Github repository name")
+    lazy val ghreleaseRepoOrg = settingKey[String]("Github repository organization")
+    lazy val ghreleaseRepoName = settingKey[String]("Github repository name")
     lazy val ghreleaseMediaTypesMap = settingKey[File => String]("This function will determine media type for the assets")
-    lazy val ghreleaseNotes         = settingKey[TagName => String]("Release notes for the given tag")
-    lazy val ghreleaseTitle         = settingKey[TagName => String]("The title of the release")
-    lazy val ghreleaseIsPrerelease  = settingKey[TagName => Boolean]("A function to determine release as a prerelease based on the tag name")
-
-    lazy val ghreleaseAssets        = taskKey[Seq[File]]("The artifact files to upload")
+    lazy val ghreleaseNotes = settingKey[TagName => String]("Release notes for the given tag")
+    lazy val ghreleaseTitle = settingKey[TagName => String]("The title of the release")
+    lazy val ghreleaseIsPrerelease = settingKey[TagName => Boolean]("A function to determine release as a prerelease based on the tag name")
+    lazy val ghreleaseGithubCreds = settingKey[Option[GitHubCredentials]]("Credentials for accessing the GitHub API")
+    lazy val ghreleaseAssets = taskKey[Seq[File]]("The artifact files to upload")
 
     // TODO: remove this, make them tasks or parameters for the main task
     // lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
 
-    lazy val ghreleaseGetCredentials = taskKey[GitHub]("Checks authentification and suggests to create a new oauth token if needed")
-    lazy val ghreleaseGetRepo        = taskKey[GHRepository]("Checks repo existence and returns it if it's fine")
+    lazy val ghreleaseGetCredentials = taskKey[GitHubCredentials]("Checks authentification and suggests to create a new oauth token if needed")
+    lazy val ghreleaseGetRepo = taskKey[GHRepository]("Checks repo existence and returns it if it's fine")
 
     lazy val ghreleaseGetReleaseBuilder = inputKey[GHReleaseBuilder]("Checks remote tag and returns empty release builder if everything is fine")
 
@@ -35,6 +44,7 @@ case object GithubRelease {
   }
 
   case object defs {
+
     import keys._
 
     def ghreleaseMediaTypesMap: File => String = {
@@ -47,33 +57,52 @@ case object GithubRelease {
       typeMap.getContentType
     }
 
-    def ghreleaseGetCredentials: DefTask[GitHub] = Def.task {
-      val log = streams.value.log
-      val conf = file(System.getProperty("user.home")) / ".github"
+    private def readCredentialsFrom(file: File): Option[GitHubCredentials] = {
+      val credentialsFile = Option(file)
+        .filter(_.isFile)
+        .filter(_.canRead)
 
-      while (!conf.exists || !GitHub.connect.isCredentialValid) {
-        log.warn("Your github credentials for sbt-github-release plugin are not set yet")
-        SimpleReader.readLine("Go to https://github.com/settings/applications \ncreate a new token and paste it here: ") match {
-          case Some(token) => {
-            try {
-              val gh = GitHub.connectUsingOAuth(token)
-              if (gh.isCredentialValid) {
-                IO.writeLines(conf, Seq("oauth = " + token))//, append = true)
-                log.info("Wrote OAuth token to " + conf)
-              }
-            } catch {
-              case e: Exception => log.error(e.toString)
-            }
-          }
-          case _ => sys.error("If you want to use sbt-github-release plugin, you should set credentials correctly")
-        }
+      val maybeCredentialParameters = credentialsFile.map { githubCredentialsFile =>
+        val lines = IO.readLines(githubCredentialsFile)
+        lines map { line =>
+          line.split("=")
+        } filter {
+          _.length == 2
+        } map { lineElements =>
+          lineElements(0) -> lineElements(1)
+        } toMap
       }
-      log.info("Github credentials are ok")
-      GitHub.connect
+
+      maybeCredentialParameters.flatMap { credentialParameters =>
+        val login = for {
+          login <- credentialParameters.get("login")
+          password <- credentialParameters.get("password")
+        } yield GitHubLogin(login, password)
+
+        val token = credentialParameters.get("oauth").map(GitHubToken)
+        token orElse login
+      }
+    }
+
+    def ghreleaseGetCredentials: DefTask[GitHubCredentials] = Def.task {
+      val log = streams.value.log
+
+      val conf = file(System.getProperty("user.home")) / ".github"
+      ghreleaseGithubCreds.value orElse readCredentialsFrom(conf) getOrElse {
+        sys.error("If you want to use sbt-github-release plugin, you should set credentials correctly")
+      }
     }
 
     def ghreleaseGetRepo: DefTask[GHRepository] = Def.task {
-      val github = ghreleaseGetCredentials.value
+      val gitHubCredentials = ghreleaseGetCredentials.value
+      val github = gitHubCredentials match {
+        case GitHubToken(token) => GitHub.connectUsingOAuth(token)
+        case GitHubLogin(login, password) => GitHub.connectUsingPassword(login, password)
+      }
+      if (!github.isCredentialValid) {
+        sys.error(s"The provided GitHub credentials are not valid!")
+      }
+
       val repo = s"${ghreleaseRepoOrg.value}/${ghreleaseRepoName.value}"
 
       Try {
@@ -87,7 +116,7 @@ case object GithubRelease {
       val repo = ghreleaseGetRepo.value
 
       val tagNames = repo.listTags.asScala.map(_.getName).toSet
-      if (! tagNames.contains(tagName)) {
+      if (!tagNames.contains(tagName)) {
         sys.error(s"Remote repository doesn't have [${tagName}] tag. You need to push it first.")
       }
 
@@ -123,7 +152,9 @@ case object GithubRelease {
           .name(ghreleaseTitle.value(tagName))
           .prerelease(isPre)
 
-        val release = Try { releaseBuilder.create } getOrElse {
+        val release = Try {
+          releaseBuilder.create
+        } getOrElse {
           sys.error("Couldn't create release")
         }
 
@@ -143,4 +174,5 @@ case object GithubRelease {
       }
     }
   }
+
 }
