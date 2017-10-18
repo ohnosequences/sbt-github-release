@@ -63,14 +63,10 @@ case object GithubRelease {
         .filter(_.canRead)
 
       val maybeCredentialParameters = credentialsFile.map { githubCredentialsFile =>
-        val lines = IO.readLines(githubCredentialsFile)
-        lines map { line =>
-          line.split("=")
-        } filter {
-          _.length == 2
-        } map { lineElements =>
-          lineElements(0) -> lineElements(1)
-        } toMap
+        import scala.collection.JavaConverters._
+        val props = new java.util.Properties()
+        props.load(new java.io.FileInputStream(githubCredentialsFile))
+        props.asScala 
       }
 
       maybeCredentialParameters.flatMap { credentialParameters =>
