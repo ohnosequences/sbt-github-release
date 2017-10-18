@@ -1,5 +1,7 @@
 package ohnosequences.sbt
 
+import java.lang.System.getProperty
+
 import org.kohsuke.github._
 import sbt.Keys._
 import sbt._
@@ -50,7 +52,9 @@ case object GithubRelease {
       typeMap.getContentType
     }
 
-    private def readCredentialsFrom(file: File): Option[String] = {
+    private val defaultPropertiesFile: sbt.File = file(s"${getProperty("user.home")}/.github")
+
+    def readCredentialsFrom(file: File = defaultPropertiesFile): Option[String] = {
       val credentialsFile = Option(file)
         .filter(_.isFile)
         .filter(_.canRead)
@@ -65,21 +69,13 @@ case object GithubRelease {
       maybeCredentialParameters.flatMap( _.get("oauth"))
     }
 
-    def ghreleaseGetCredentials: DefTask[String] = Def.task {
-      val log = streams.value.log
-
-      val conf = file(System.getProperty("user.home")) / ".github"
-
-      ghreleaseGithubToken.value orElse readCredentialsFrom(conf) getOrElse {
-        sys.error("If you want to use sbt-github-release plugin, you should set credentials correctly")
-      }
-    }
-
     def ghreleaseGetRepo: DefTask[GHRepository] = Def.task {
-      val gitHubCredentials = ghreleaseGetCredentials.value
+      val gitHubCredentials = ghreleaseGithubToken.value.getOrElse(
+        sys.error(s"Please provide github credentials in you build by setting the `ghreleaseGithubToken` key!")
+      )
+      
       val github = GitHub.connectUsingOAuth(gitHubCredentials)
       if (!github.isCredentialValid) {
-        sys.error(s"The provided GitHub credentials are not valid!")
       }
 
       val repo = s"${ghreleaseRepoOrg.value}/${ghreleaseRepoName.value}"

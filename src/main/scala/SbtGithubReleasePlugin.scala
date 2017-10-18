@@ -26,7 +26,6 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
     ghreleaseIsPrerelease   := { _.matches(""".*-.*""") },
     ghreleaseMediaTypesMap  := defs.ghreleaseMediaTypesMap,
     ghreleaseAssets         := packagedArtifacts.value.values.toSeq,
-    ghreleaseGetCredentials := defs.ghreleaseGetCredentials.value,
     ghreleaseGetRepo        := defs.ghreleaseGetRepo.value,
 
     ghreleaseGetReleaseBuilder := Def.inputTaskDyn {
