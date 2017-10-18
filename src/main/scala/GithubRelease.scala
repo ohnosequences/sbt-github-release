@@ -8,13 +8,6 @@ import scala.collection.JavaConverters._
 import scala.util.Try
 
 
-sealed trait GitHubCredentials
-
-final case class GitHubToken(token: String) extends GitHubCredentials
-
-final case class GitHubLogin(login: String,
-                             password: String) extends GitHubCredentials
-
 case object GithubRelease {
 
   type DefTask[X] = Def.Initialize[Task[X]]
@@ -29,13 +22,13 @@ case object GithubRelease {
     lazy val ghreleaseNotes = settingKey[TagName => String]("Release notes for the given tag")
     lazy val ghreleaseTitle = settingKey[TagName => String]("The title of the release")
     lazy val ghreleaseIsPrerelease = settingKey[TagName => Boolean]("A function to determine release as a prerelease based on the tag name")
-    lazy val ghreleaseGithubCreds = settingKey[Option[GitHubCredentials]]("Credentials for accessing the GitHub API")
+    lazy val ghreleaseGithubToken = settingKey[Option[String]]("Credentials for accessing the GitHub API")
     lazy val ghreleaseAssets = taskKey[Seq[File]]("The artifact files to upload")
 
     // TODO: remove this, make them tasks or parameters for the main task
     // lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
 
-    lazy val ghreleaseGetCredentials = taskKey[GitHubCredentials]("Checks authentification and suggests to create a new oauth token if needed")
+    lazy val ghreleaseGetCredentials = taskKey[String]("Checks authentification and suggests to create a new oauth token if needed")
     lazy val ghreleaseGetRepo = taskKey[GHRepository]("Checks repo existence and returns it if it's fine")
 
     lazy val ghreleaseGetReleaseBuilder = inputKey[GHReleaseBuilder]("Checks remote tag and returns empty release builder if everything is fine")
@@ -57,7 +50,7 @@ case object GithubRelease {
       typeMap.getContentType
     }
 
-    private def readCredentialsFrom(file: File): Option[GitHubCredentials] = {
+    private def readCredentialsFrom(file: File): Option[String] = {
       val credentialsFile = Option(file)
         .filter(_.isFile)
         .filter(_.canRead)
@@ -69,32 +62,22 @@ case object GithubRelease {
         props.asScala 
       }
 
-      maybeCredentialParameters.flatMap { credentialParameters =>
-        val login = for {
-          login <- credentialParameters.get("login")
-          password <- credentialParameters.get("password")
-        } yield GitHubLogin(login, password)
-
-        val token = credentialParameters.get("oauth").map(GitHubToken)
-        token orElse login
-      }
+      maybeCredentialParameters.flatMap( _.get("oauth"))
     }
 
-    def ghreleaseGetCredentials: DefTask[GitHubCredentials] = Def.task {
+    def ghreleaseGetCredentials: DefTask[String] = Def.task {
       val log = streams.value.log
 
       val conf = file(System.getProperty("user.home")) / ".github"
-      ghreleaseGithubCreds.value orElse readCredentialsFrom(conf) getOrElse {
+
+      ghreleaseGithubToken.value orElse readCredentialsFrom(conf) getOrElse {
         sys.error("If you want to use sbt-github-release plugin, you should set credentials correctly")
       }
     }
 
     def ghreleaseGetRepo: DefTask[GHRepository] = Def.task {
       val gitHubCredentials = ghreleaseGetCredentials.value
-      val github = gitHubCredentials match {
-        case GitHubToken(token) => GitHub.connectUsingOAuth(token)
-        case GitHubLogin(login, password) => GitHub.connectUsingPassword(login, password)
-      }
+      val github = GitHub.connectUsingOAuth(gitHubCredentials)
       if (!github.isCredentialValid) {
         sys.error(s"The provided GitHub credentials are not valid!")
       }
