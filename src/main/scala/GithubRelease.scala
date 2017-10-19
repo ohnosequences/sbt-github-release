@@ -54,13 +54,24 @@ case object GithubRelease {
 
     private val defaultPropertiesFile: sbt.File = file(s"${getProperty("user.home")}/.github")
 
-    def readCredentialsFrom(file: File = defaultPropertiesFile): Option[String] = {
+    def readFromEnvironment(): Option[String] = {
+      readFromEnvironment("GITHUB_TOKEN")
+    }
+    
+    def readFromEnvironment(environmentVariableName: String): Option[String] = {
+      System.getenv().asScala.get(environmentVariableName)
+    }
+
+    def readCredentialsFrom(): Option[String] = {
+      readCredentialsFrom(defaultPropertiesFile)
+    }
+    
+    def readCredentialsFrom(file: File): Option[String] = {
       val credentialsFile = Option(file)
         .filter(_.isFile)
         .filter(_.canRead)
 
       val maybeCredentialParameters = credentialsFile.map { githubCredentialsFile =>
-        import scala.collection.JavaConverters._
         val props = new java.util.Properties()
         props.load(new java.io.FileInputStream(githubCredentialsFile))
         props.asScala 
@@ -73,7 +84,7 @@ case object GithubRelease {
       val gitHubCredentials = ghreleaseGithubToken.value.getOrElse(
         sys.error(s"Please provide github credentials in you build by setting the `ghreleaseGithubToken` key!")
       )
-      
+
       val github = GitHub.connectUsingOAuth(gitHubCredentials)
       if (!github.isCredentialValid) {
       }
