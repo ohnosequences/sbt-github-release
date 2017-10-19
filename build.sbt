@@ -12,13 +12,6 @@ bucketSuffix := "era7.com"
 resolvers += "Github-API" at "http://repo.jenkins-ci.org/public/"
 libraryDependencies += "org.kohsuke" % "github-api" % "1.89"
 
-libraryDependencies := libraryDependencies.value
-  .filterNot { _.name == "scalatest" }
-  
-sourceGenerators in Test := Seq()
-
-wartremoverErrors in (Compile, compile) --= Seq(Wart.Any, Wart.NonUnitStatements)
-
 bintrayReleaseOnPublish := !isSnapshot.value
 bintrayOrganization     := Some(organization.value)
 bintrayPackageLabels    := Seq("sbt", "sbt-plugin", "github", "releases", "publish")
