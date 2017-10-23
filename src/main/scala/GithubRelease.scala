@@ -1,14 +1,11 @@
 package ohnosequences.sbt
 
+import sbt._, sbt.Keys._
 import java.lang.System.getProperty
 
 import org.kohsuke.github._
-import sbt.Keys._
-import sbt._
-
 import scala.collection.JavaConverters._
 import scala.util.Try
-
 
 case object GithubRelease {
 
@@ -18,14 +15,14 @@ case object GithubRelease {
   case object keys {
     type TagName = String
 
-    lazy val ghreleaseRepoOrg = settingKey[String]("Github repository organization")
-    lazy val ghreleaseRepoName = settingKey[String]("Github repository name")
+    lazy val ghreleaseRepoOrg       = settingKey[String]("Github repository organization")
+    lazy val ghreleaseRepoName      = settingKey[String]("Github repository name")
     lazy val ghreleaseMediaTypesMap = settingKey[File => String]("This function will determine media type for the assets")
-    lazy val ghreleaseNotes = settingKey[TagName => String]("Release notes for the given tag")
-    lazy val ghreleaseTitle = settingKey[TagName => String]("The title of the release")
-    lazy val ghreleaseIsPrerelease = settingKey[TagName => Boolean]("A function to determine release as a prerelease based on the tag name")
-    lazy val ghreleaseGithubToken = settingKey[Option[String]]("Credentials for accessing the GitHub API")
-    lazy val ghreleaseAssets = taskKey[Seq[File]]("The artifact files to upload")
+    lazy val ghreleaseNotes         = settingKey[TagName => String]("Release notes for the given tag")
+    lazy val ghreleaseTitle         = settingKey[TagName => String]("The title of the release")
+    lazy val ghreleaseIsPrerelease  = settingKey[TagName => Boolean]("A function to determine release as a prerelease based on the tag name")
+    lazy val ghreleaseGithubToken   = settingKey[Option[String]]("Credentials for accessing the GitHub API")
+    lazy val ghreleaseAssets        = taskKey[Seq[File]]("The artifact files to upload")
 
     // TODO: remove this, make them tasks or parameters for the main task
     // lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
@@ -39,7 +36,6 @@ case object GithubRelease {
   }
 
   case object defs {
-
     import keys._
 
     def ghreleaseMediaTypesMap: File => String = {
@@ -57,7 +53,7 @@ case object GithubRelease {
     def readFromEnvironment(): Option[String] = {
       readFromEnvironment("GITHUB_TOKEN")
     }
-    
+
     def readFromEnvironment(environmentVariableName: String): Option[String] = {
       System.getenv().asScala.get(environmentVariableName)
     }
@@ -65,7 +61,7 @@ case object GithubRelease {
     def readCredentialsFrom(): Option[String] = {
       readCredentialsFrom(defaultPropertiesFile)
     }
-    
+
     def readCredentialsFrom(file: File): Option[String] = {
       val credentialsFile = Option(file)
         .filter(_.isFile)
@@ -74,10 +70,10 @@ case object GithubRelease {
       val maybeCredentialParameters = credentialsFile.map { githubCredentialsFile =>
         val props = new java.util.Properties()
         props.load(new java.io.FileInputStream(githubCredentialsFile))
-        props.asScala 
+        props.asScala
       }
 
-      maybeCredentialParameters.flatMap( _.get("oauth"))
+      maybeCredentialParameters.flatMap(_.get("oauth"))
     }
 
     def ghreleaseGetRepo: DefTask[GHRepository] = Def.task {
@@ -102,7 +98,7 @@ case object GithubRelease {
       val repo = ghreleaseGetRepo.value
 
       val tagNames = repo.listTags.asScala.map(_.getName).toSet
-      if (!tagNames.contains(tagName)) {
+      if (! tagNames.contains(tagName)) {
         sys.error(s"Remote repository doesn't have [${tagName}] tag. You need to push it first.")
       }
 
@@ -138,9 +134,7 @@ case object GithubRelease {
           .name(ghreleaseTitle.value(tagName))
           .prerelease(isPre)
 
-        val release = Try {
-          releaseBuilder.create
-        } getOrElse {
+        val release = Try { releaseBuilder.create } getOrElse {
           sys.error("Couldn't create release")
         }
 
@@ -160,5 +154,4 @@ case object GithubRelease {
       }
     }
   }
-
 }
