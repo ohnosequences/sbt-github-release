@@ -12,6 +12,9 @@ case object GithubRelease {
   type DefTask[X] = Def.Initialize[Task[X]]
   type DefSetting[X] = Def.Initialize[Setting[X]]
 
+  val ghreleaseDefaultTokenEnvVar: String = "GITHUB_TOKEN"
+  val ghreleaseDefaultTokenFile: File = file(s"${getProperty("user.home")}/.github")
+
   case object keys {
     type TagName = String
 
@@ -38,6 +41,11 @@ case object GithubRelease {
   case object defs {
     import keys._
 
+    ghreleaseGithubToken := {
+      ghreleaseGithubTokenFromEnv(ghreleaseDefaultTokenEnvVar) orElse
+      ghreleaseGithubTokenFromFile(ghreleaseDefaultTokenFile)
+    }
+    
     def ghreleaseMediaTypesMap: File => String = {
       val typeMap = new javax.activation.MimetypesFileTypeMap()
       // NOTE: github doesn't know about application/java-archive type (see https://developer.github.com/v3/repos/releases/#input-2)
@@ -48,21 +56,13 @@ case object GithubRelease {
       typeMap.getContentType
     }
 
-    private val defaultPropertiesFile: sbt.File = file(s"${getProperty("user.home")}/.github")
+    val ghreleaseDefaultPropertiesFile: sbt.File = file(s"${getProperty("user.home")}/.github")
 
-    def readFromEnvironment(): Option[String] = {
-      readFromEnvironment("GITHUB_TOKEN")
-    }
-
-    def readFromEnvironment(environmentVariableName: String): Option[String] = {
+    def ghreleaseGithubTokenFromEnv(environmentVariableName: String): Option[String] = {
       System.getenv().asScala.get(environmentVariableName)
     }
-
-    def readCredentialsFrom(): Option[String] = {
-      readCredentialsFrom(defaultPropertiesFile)
-    }
-
-    def readCredentialsFrom(file: File): Option[String] = {
+    
+    def ghreleaseGithubTokenFromFile(file: File): Option[String] = {
       val credentialsFile = Option(file)
         .filter(_.isFile)
         .filter(_.canRead)
