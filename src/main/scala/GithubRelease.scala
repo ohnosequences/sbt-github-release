@@ -29,8 +29,7 @@ case object GithubRelease {
 
     // TODO: remove this, make them tasks or parameters for the main task
     // lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
-
-    lazy val ghreleaseGetCredentials = taskKey[String]("Checks authentification and suggests to create a new oauth token if needed")
+    
     lazy val ghreleaseGetRepo = taskKey[GHRepository]("Checks repo existence and returns it if it's fine")
 
     lazy val ghreleaseGetReleaseBuilder = inputKey[GHReleaseBuilder]("Checks remote tag and returns empty release builder if everything is fine")
@@ -83,6 +82,7 @@ case object GithubRelease {
 
       val github = GitHub.connectUsingOAuth(gitHubCredentials)
       if (!github.isCredentialValid) {
+        sys.error("No GitHub credentials found !")
       }
 
       val repo = s"${ghreleaseRepoOrg.value}/${ghreleaseRepoName.value}"
