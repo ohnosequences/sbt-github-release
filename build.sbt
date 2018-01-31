@@ -17,7 +17,3 @@ bintrayPackageLabels    := Seq("sbt", "sbt-plugin", "github", "releases", "publi
 
 publishMavenStyle := false
 publishTo := (publishTo in bintray).value
-
-// Publishing fat-jar
-artifact in (Compile, assembly) ~= { _.withClassifier(Some("fat")) }
-addArtifact(artifact in (Compile, assembly), assembly)
