@@ -9,8 +9,7 @@ sbtVersion   := "1.0.4"
 
 bucketSuffix := "era7.com"
 
-resolvers += "Github-API" at "http://repo.jenkins-ci.org/public/"
-libraryDependencies += "org.kohsuke" % "github-api" % "1.89"
+libraryDependencies += "org.kohsuke" % "github-api" % "1.92"
 
 bintrayReleaseOnPublish := !isSnapshot.value
 bintrayOrganization     := Some(organization.value)
