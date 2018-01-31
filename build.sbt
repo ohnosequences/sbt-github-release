@@ -4,13 +4,12 @@ name         := "sbt-github-release"
 organization := "ohnosequences"
 description  := "sbt plugin using github releases api"
 
-scalaVersion := "2.12.3"
-sbtVersion   := "1.0.2"
+scalaVersion := "2.12.4"
+sbtVersion   := "1.0.4"
 
 bucketSuffix := "era7.com"
 
-resolvers += "Github-API" at "http://repo.jenkins-ci.org/public/"
-libraryDependencies += "org.kohsuke" % "github-api" % "1.89"
+libraryDependencies += "org.kohsuke" % "github-api" % "1.92"
 
 bintrayReleaseOnPublish := !isSnapshot.value
 bintrayOrganization     := Some(organization.value)
@@ -18,7 +17,3 @@ bintrayPackageLabels    := Seq("sbt", "sbt-plugin", "github", "releases", "publi
 
 publishMavenStyle := false
 publishTo := (publishTo in bintray).value
-
-// Publishing fat-jar
-artifact in (Compile, assembly) ~= { _.withClassifier(Some("fat")) }
-addArtifact(artifact in (Compile, assembly), assembly)
