@@ -12,16 +12,13 @@ bucketSuffix := "era7.com"
 resolvers += "Github-API" at "http://repo.jenkins-ci.org/public/"
 libraryDependencies += "org.kohsuke" % "github-api" % "1.89"
 
-libraryDependencies := libraryDependencies.value
-  .filterNot { _.name == "scalatest" }
-  
-sourceGenerators in Test := Seq()
-
-wartremoverErrors in (Compile, compile) --= Seq(Wart.Any, Wart.NonUnitStatements)
-
 bintrayReleaseOnPublish := !isSnapshot.value
 bintrayOrganization     := Some(organization.value)
 bintrayPackageLabels    := Seq("sbt", "sbt-plugin", "github", "releases", "publish")
 
 publishMavenStyle := false
 publishTo := (publishTo in bintray).value
+
+// Publishing fat-jar
+artifact in (Compile, assembly) ~= { _.withClassifier(Some("fat")) }
+addArtifact(artifact in (Compile, assembly), assembly)

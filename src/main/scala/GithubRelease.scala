@@ -58,8 +58,8 @@ case object GithubRelease {
             try {
               val gh = GitHub.connectUsingOAuth(token)
               if (gh.isCredentialValid) {
-                IO.writeLines(conf, Seq("oauth = " + token))//, append = true)
-                log.info("Wrote OAuth token to " + conf)
+                IO.writeLines(conf, Seq(s"oauth = ${token}"))//, append = true)
+                log.info(s"Wrote OAuth token to ${conf}")
               }
             } catch {
               case e: Exception => log.error(e.toString)
