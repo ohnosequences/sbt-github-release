@@ -28,6 +28,11 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
     ghreleaseAssets         := packagedArtifacts.value.values.toSeq,
     ghreleaseGetRepo        := defs.ghreleaseGetRepo.value,
 
+    ghreleaseGithubToken := {
+      defs.githubTokenFromEnv(defs.defaultTokenEnvVar) orElse
+      defs.githubTokenFromFile(defs.defaultTokenFile)
+    },
+
     ghreleaseGetReleaseBuilder := Def.inputTaskDyn {
       defs.ghreleaseGetReleaseBuilder(tagNameArg.parsed)
     }.evaluated,

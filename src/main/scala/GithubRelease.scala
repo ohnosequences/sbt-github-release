@@ -12,9 +12,6 @@ case object GithubRelease {
   type DefTask[X] = Def.Initialize[Task[X]]
   type DefSetting[X] = Def.Initialize[Setting[X]]
 
-  val ghreleaseDefaultTokenEnvVar: String = "GITHUB_TOKEN"
-  val ghreleaseDefaultTokenFile: File = file(s"${getProperty("user.home")}/.github")
-
   case object keys {
     type TagName = String
 
@@ -29,7 +26,7 @@ case object GithubRelease {
 
     // TODO: remove this, make them tasks or parameters for the main task
     // lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
-    
+
     lazy val ghreleaseGetRepo = taskKey[GHRepository]("Checks repo existence and returns it if it's fine")
 
     lazy val ghreleaseGetReleaseBuilder = inputKey[GHReleaseBuilder]("Checks remote tag and returns empty release builder if everything is fine")
@@ -40,11 +37,9 @@ case object GithubRelease {
   case object defs {
     import keys._
 
-    ghreleaseGithubToken := {
-      ghreleaseGithubTokenFromEnv(ghreleaseDefaultTokenEnvVar) orElse
-      ghreleaseGithubTokenFromFile(ghreleaseDefaultTokenFile)
-    }
-    
+    val defaultTokenEnvVar: String = "GITHUB_TOKEN"
+    val defaultTokenFile: File = file(s"${getProperty("user.home")}/.github")
+
     def ghreleaseMediaTypesMap: File => String = {
       val typeMap = new javax.activation.MimetypesFileTypeMap()
       // NOTE: github doesn't know about application/java-archive type (see https://developer.github.com/v3/repos/releases/#input-2)
@@ -55,13 +50,11 @@ case object GithubRelease {
       typeMap.getContentType
     }
 
-    val ghreleaseDefaultPropertiesFile: sbt.File = file(s"${getProperty("user.home")}/.github")
-
-    def ghreleaseGithubTokenFromEnv(environmentVariableName: String): Option[String] = {
+    def githubTokenFromEnv(environmentVariableName: String): Option[String] = {
       System.getenv().asScala.get(environmentVariableName)
     }
-    
-    def ghreleaseGithubTokenFromFile(file: File): Option[String] = {
+
+    def githubTokenFromFile(file: File): Option[String] = {
       val credentialsFile = Option(file)
         .filter(_.isFile)
         .filter(_.canRead)
@@ -76,9 +69,9 @@ case object GithubRelease {
     }
 
     def ghreleaseGetRepo: DefTask[GHRepository] = Def.task {
-      val gitHubCredentials = ghreleaseGithubToken.value.getOrElse(
+      val gitHubCredentials = ghreleaseGithubToken.value.getOrElse {
         sys.error(s"Please provide github credentials in you build by setting the `ghreleaseGithubToken` key!")
-      )
+      }
 
       val github = GitHub.connectUsingOAuth(gitHubCredentials)
       if (!github.isCredentialValid) {
