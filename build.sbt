@@ -4,20 +4,12 @@ name         := "sbt-github-release"
 organization := "ohnosequences"
 description  := "sbt plugin using github releases api"
 
-scalaVersion := "2.12.3"
-sbtVersion   := "1.0.2"
+scalaVersion := "2.12.4"
+sbtVersion   := "1.0.4"
 
 bucketSuffix := "era7.com"
 
-resolvers += "Github-API" at "http://repo.jenkins-ci.org/public/"
-libraryDependencies += "org.kohsuke" % "github-api" % "1.89"
-
-libraryDependencies := libraryDependencies.value
-  .filterNot { _.name == "scalatest" }
-  
-sourceGenerators in Test := Seq()
-
-wartremoverErrors in (Compile, compile) --= Seq(Wart.Any, Wart.NonUnitStatements)
+libraryDependencies += "org.kohsuke" % "github-api" % "1.92"
 
 bintrayReleaseOnPublish := !isSnapshot.value
 bintrayOrganization     := Some(organization.value)
