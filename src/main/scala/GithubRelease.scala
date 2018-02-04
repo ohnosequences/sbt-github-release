@@ -22,15 +22,13 @@ case object GithubRelease {
     lazy val ghreleaseTitle         = settingKey[TagName => String]("The title of the release")
     lazy val ghreleaseIsPrerelease  = settingKey[TagName => Boolean]("A function to determine release as a prerelease based on the tag name")
     lazy val ghreleaseGithubToken   = settingKey[Option[String]]("Credentials for accessing the GitHub API")
-    lazy val ghreleaseAssets        = taskKey[Seq[File]]("The artifact files to upload")
 
-    // TODO: remove this, make them tasks or parameters for the main task
-    // lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
-
+    lazy val ghreleaseAssets  = taskKey[Seq[File]]("The artifact files to upload")
     lazy val ghreleaseGetRepo = taskKey[GHRepository]("Checks repo existence and returns it if it's fine")
 
     lazy val ghreleaseGetReleaseBuilder = inputKey[GHReleaseBuilder]("Checks remote tag and returns empty release builder if everything is fine")
 
+    // TODO: add a parameter for draft release
     lazy val githubRelease = inputKey[GHRelease]("Publishes a release of Github")
   }
 
