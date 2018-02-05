@@ -4,4 +4,4 @@ resolvers += Resolver.jcenterRepo
 addSbtPlugin("ohnosequences" % "nice-sbt-settings" % "0.9.0")
 addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.3")
 
-dependencyOverrides += "ohnosequences" % "sbt-github-release" % "0.6.0"
+dependencyOverrides += "ohnosequences" % "sbt-github-release" % "0.6.0-16-ge8e5ec5"
