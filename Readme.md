@@ -23,6 +23,9 @@ addSbtPlugin("ohnosequences" % "sbt-github-release" % "<version>")
 
 > Note that since `v0.5.0` this plugin is compiled and published _only_ for **sbt-1.x**. If you need it for sbt-0.13, use [`v0.4.0`](https://github.com/ohnosequences/sbt-github-release/tree/v0.4.0).
 
+### Task keys
+
+The main task is `githubRelease`, it creates the release and publishes the assets.
 
 ### Setting keys
 
@@ -35,10 +38,10 @@ addSbtPlugin("ohnosequences" % "sbt-github-release" % "<version>")
 | `ghreleaseIsPrerelease`  | `TagName => Boolean` | A function to determine release as a prerelease based |
 | `ghreleaseAssets`        | `Seq[File]`          | The artifact files to upload                          |
 | `ghreleaseMediaTypesMap` | `File => String`     | A function to determine media type for the assets     |
+| `ghreleaseGithubToken`   | `Option[String]`     | OAuth credentials used to access Github API           |
 
 
 You can find their defaults in the plugin [code](src/main/scala/SbtGithubReleasePlugin.scala).
-
 
 #### Assets
 
@@ -51,23 +54,18 @@ By default `ghreleaseMediaTypesMap` is set to the default Java [`MimetypesFileTy
 If you don't want to upload any files, just set `GithubRelease.ghreleaseAssets := Seq()`
 
 
-### Task keys
+#### Credentials
 
-The main task is `githubRelease`, it creates the release and publishes the assests.
+This plugin requires an OAuth token with `repo` scope to interact with Github API. Use this link to create it in your Github profile:
 
-There are some other tasks which work as intermediate checks:
+* https://github.com/settings/tokens/new?description=sbt-github-release&scopes=repo
 
-* `ghreleaseGetCredentials` — checks Github OAuth token and helps to set it if needed
-* `ghreleaseGetRepo` — checks that the repository exists and is accessible
-* `ghreleaseGetReleaseBuilder` — checks that Github repo contains the tag and there is no release based on it yet
+By default `ghreleaseGithubToken` looks for the token in the following places:
 
+* `GITHUB_TOKEN` environment variable (using `githubTokenFromEnv(...)` shortcut),
+* `~/.github` properties file (using `githubTokenFromFile(...)` shortcut). Expected file format is
+    ```
+    oauth = 623454b0sd3645bdfdes541dd1fdg34504a8cXXX
+    ```
 
-### Credentials
-
-This plugin requires an OAuth token from your Github account. It should be placed in `~/.github`:
-
-```
-oauth = 623454b0sd3645bdfdes541dd1fdg34504a8cXXX
-```
-
-But you don't need to create this file manually — when running `githubRelease`, plugin checks it and if there is no valid token, asks you to go and create one and then saves it.
+You can use either of these two shortcuts (with `import ohnosequences.sbt.GithubRelease.defs._`) or any other way to retrieve the token and set it explicitly.
