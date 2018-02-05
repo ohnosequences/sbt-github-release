@@ -8,7 +8,7 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
 
   // This plugin will load automatically
   override def trigger = allRequirements
-  override def requires = empty
+  override def requires = sbt.plugins.IvyPlugin
 
   val autoImport = GithubRelease.keys
 
