@@ -1,6 +1,7 @@
 package ohnosequences.sbt
 
-import sbt._, Keys._
+import sbt._, sbt.Keys._
+import java.lang.System.getProperty
 
 import org.kohsuke.github._
 import scala.collection.JavaConverters._
@@ -20,22 +21,22 @@ case object GithubRelease {
     lazy val ghreleaseNotes         = settingKey[TagName => String]("Release notes for the given tag")
     lazy val ghreleaseTitle         = settingKey[TagName => String]("The title of the release")
     lazy val ghreleaseIsPrerelease  = settingKey[TagName => Boolean]("A function to determine release as a prerelease based on the tag name")
+    lazy val ghreleaseGithubToken   = settingKey[Option[String]]("Credentials for accessing the GitHub API")
 
-    lazy val ghreleaseAssets        = taskKey[Seq[File]]("The artifact files to upload")
-
-    // TODO: remove this, make them tasks or parameters for the main task
-    // lazy val draft = settingKey[Boolean]("true to create a draft (unpublished) release, false to create a published one")
-
-    lazy val ghreleaseGetCredentials = taskKey[GitHub]("Checks authentification and suggests to create a new oauth token if needed")
-    lazy val ghreleaseGetRepo        = taskKey[GHRepository]("Checks repo existence and returns it if it's fine")
+    lazy val ghreleaseAssets  = taskKey[Seq[File]]("The artifact files to upload")
+    lazy val ghreleaseGetRepo = taskKey[GHRepository]("Checks repo existence and returns it if it's fine")
 
     lazy val ghreleaseGetReleaseBuilder = inputKey[GHReleaseBuilder]("Checks remote tag and returns empty release builder if everything is fine")
 
+    // TODO: add a parameter for draft release
     lazy val githubRelease = inputKey[GHRelease]("Publishes a release of Github")
   }
 
   case object defs {
     import keys._
+
+    val defaultTokenEnvVar: String = "GITHUB_TOKEN"
+    val defaultTokenFile: File = file(s"${getProperty("user.home")}/.github")
 
     def ghreleaseMediaTypesMap: File => String = {
       val typeMap = new javax.activation.MimetypesFileTypeMap()
@@ -47,33 +48,34 @@ case object GithubRelease {
       typeMap.getContentType
     }
 
-    def ghreleaseGetCredentials: DefTask[GitHub] = Def.task {
-      val log = streams.value.log
-      val conf = file(System.getProperty("user.home")) / ".github"
+    def githubTokenFromEnv(environmentVariableName: String): Option[String] = {
+      System.getenv().asScala.get(environmentVariableName)
+    }
 
-      while (!conf.exists || !GitHub.connect.isCredentialValid) {
-        log.warn("Your github credentials for sbt-github-release plugin are not set yet")
-        SimpleReader.readLine("Go to https://github.com/settings/applications \ncreate a new token and paste it here: ") match {
-          case Some(token) => {
-            try {
-              val gh = GitHub.connectUsingOAuth(token)
-              if (gh.isCredentialValid) {
-                IO.writeLines(conf, Seq(s"oauth = ${token}"))//, append = true)
-                log.info(s"Wrote OAuth token to ${conf}")
-              }
-            } catch {
-              case e: Exception => log.error(e.toString)
-            }
-          }
-          case _ => sys.error("If you want to use sbt-github-release plugin, you should set credentials correctly")
-        }
+    def githubTokenFromFile(file: File): Option[String] = {
+      val credentialsFile = Option(file)
+        .filter(_.isFile)
+        .filter(_.canRead)
+
+      val maybeCredentialParameters = credentialsFile.map { githubCredentialsFile =>
+        val props = new java.util.Properties()
+        props.load(new java.io.FileInputStream(githubCredentialsFile))
+        props.asScala
       }
-      log.info("Github credentials are ok")
-      GitHub.connect
+
+      maybeCredentialParameters.flatMap(_.get("oauth"))
     }
 
     def ghreleaseGetRepo: DefTask[GHRepository] = Def.task {
-      val github = ghreleaseGetCredentials.value
+      val gitHubCredentials = ghreleaseGithubToken.value.getOrElse {
+        sys.error(s"Please provide github credentials in you build by setting the `ghreleaseGithubToken` key!")
+      }
+
+      val github = GitHub.connectUsingOAuth(gitHubCredentials)
+      if (!github.isCredentialValid) {
+        sys.error("No GitHub credentials found !")
+      }
+
       val repo = s"${ghreleaseRepoOrg.value}/${ghreleaseRepoName.value}"
 
       Try {
