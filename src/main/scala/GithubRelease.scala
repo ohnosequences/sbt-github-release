@@ -12,6 +12,8 @@ case object GithubRelease {
   type DefTask[X] = Def.Initialize[Task[X]]
   type DefSetting[X] = Def.Initialize[Setting[X]]
 
+  case class Origin(organization: String, name: String)
+
   case object keys {
     type TagName = String
 
@@ -22,6 +24,7 @@ case object GithubRelease {
     lazy val ghreleaseTitle         = settingKey[TagName => String]("The title of the release")
     lazy val ghreleaseIsPrerelease  = settingKey[TagName => Boolean]("A function to determine release as a prerelease based on the tag name")
     lazy val ghreleaseGithubToken   = settingKey[Option[String]]("Credentials for accessing the GitHub API")
+    lazy val ghreleaseGithubOrigin  = settingKey[Option[Origin]]("GitHub origin")
 
     lazy val ghreleaseAssets  = taskKey[Seq[File]]("The artifact files to upload")
     lazy val ghreleaseGetRepo = taskKey[GHRepository]("Checks repo existence and returns it if it's fine")

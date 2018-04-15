@@ -18,8 +18,10 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
       val ver = tagName.stripPrefix("v")
       IO.read(baseDirectory.value / "notes" / s"${ver}.markdown")
     },
-    ghreleaseRepoOrg   := organization.value,
-    ghreleaseRepoName  := name.value,
+    ghreleaseGithubOrigin := githubOrigin(baseDirectory.value),
+
+    ghreleaseRepoOrg   := ghreleaseGithubOrigin.value.map(_.organization).getOrElse(organization.value),
+    ghreleaseRepoName  := ghreleaseGithubOrigin.value.map(_.name).getOrElse(name.value),
     ghreleaseTitle     := { tagName => s"${name.value} ${tagName}" },
     // According to the Semantic Versioning Specification (rule 9)
     // a version containing a hyphen is a pre-release version
@@ -56,5 +58,21 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
     val fallback = s"v${version.value}"
 
     (Space ~> suggestions.getOrElse(StringBasic)) ?? fallback
+  }
+
+  def githubOrigin(base: File): Option[GithubRelease.Origin] = {
+    val gitOut: Try[String] = Try {
+      sys.process.Process(Seq("git", "ls-remote", "--get-url", "origin"), base).!!
+    }
+
+    val repoExtractPattern = """/([^/]*)/([^/]*)""".r
+
+    gitOut.map { out =>
+      val path = new URI(out.trim).getPath
+      path match {
+        case repoExtractPattern(organization, name) => Some(GithubRelease.Origin(organization, name))
+        case _ => None
+      }
+    }.toOption.flatten
   }
 }
