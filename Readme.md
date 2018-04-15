@@ -43,6 +43,10 @@ The main task is `githubRelease`, it creates the release and publishes the asset
 
 You can find their defaults in the plugin [code](src/main/scala/SbtGithubReleasePlugin.scala).
 
+#### Autodetect repository organization and name
+
+By default, this plugin will try to auto-detect settings for `ghreleaseRepoOrg` and `ghreleaseRepoName` based on git remote with name `origin`. If such remote not exist then plugin will fallback to sbt organization/name. If you would like to avoid auto-detect behavior you should set `ghreleaseRepoOrg` and `ghreleaseRepoName` explicitly.
+
 #### Assets
 
 You can set which files to attach to the release using the `ghreleaseAssets` task (of `Seq[File]` type). By default it refers to the `packagedArtifacts` task.
