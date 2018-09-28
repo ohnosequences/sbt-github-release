@@ -7,9 +7,10 @@ description  := "sbt plugin using github releases api"
 scalaVersion := "2.12.4"
 sbtVersion   := "1.0.4"
 
-bucketSuffix := "era7.com"
+//bucketSuffix := "era7.com"
 
 libraryDependencies += "org.kohsuke" % "github-api" % "1.92"
+libraryDependencies += "com.sun.activation" % "javax.activation" % "1.2.0"
 
 bintrayReleaseOnPublish := !isSnapshot.value
 bintrayOrganization     := Some(organization.value)
