@@ -1,0 +1,1 @@
+Includes patch #27: Takes github repo name from git config instead of build.sbt  (by @vshalts)
