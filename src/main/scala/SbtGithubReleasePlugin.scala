@@ -31,9 +31,11 @@ case object SbtGithubReleasePlugin extends AutoPlugin {
     ghreleaseGetRepo        := defs.ghreleaseGetRepo.value,
 
     ghreleaseGithubToken := {
-      defs.githubTokenFromEnv(defs.defaultTokenEnvVar) orElse
+      defs.getSystemEnvVar(defs.defaultTokenEnvVar) orElse
       defs.githubTokenFromFile(defs.defaultTokenFile)
     },
+    ghreleaseGithubEnterpriseUrl := defs.getSystemEnvVar(defs.defaultEnterpriseUrlEnvVar),
+    ghreleaseGithubUser := defs.getSystemEnvVar(defs.defaultUserEnvVar),
 
     ghreleaseGetReleaseBuilder := Def.inputTaskDyn {
       defs.ghreleaseGetReleaseBuilder(tagNameArg.parsed)

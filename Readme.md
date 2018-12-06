@@ -39,6 +39,8 @@ The main task is `githubRelease`, it creates the release and publishes the asset
 | `ghreleaseAssets`        | `Seq[File]`          | The artifact files to upload                          |
 | `ghreleaseMediaTypesMap` | `File => String`     | A function to determine media type for the assets     |
 | `ghreleaseGithubToken`   | `Option[String]`     | OAuth credentials used to access Github API           |
+| `ghreleaseGithubEnterpriseUrl`|`Option[String]` | Github enterprise url                                 |
+| `ghreleaseGithubUser`    | `Option[String]`     | Github enterprise user name                           |
 
 
 You can find their defaults in the plugin [code](src/main/scala/SbtGithubReleasePlugin.scala).
@@ -73,3 +75,5 @@ By default `ghreleaseGithubToken` looks for the token in the following places:
     ```
 
 You can use either of these two shortcuts (with `import ohnosequences.sbt.GithubRelease.defs._`) or any other way to retrieve the token and set it explicitly.
+
+It is also possible to connect to your own github enterprise instance by setting `GITHUB_URL` to determine which url to connect to and `GITHUB_USERNAME` to determine the github user.
