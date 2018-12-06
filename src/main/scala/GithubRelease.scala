@@ -147,12 +147,14 @@ case object GithubRelease {
         // val pub = if(draft.value) "saved as a draft" else "published"
         log.info(s"Github ${pre}release '${release.getName}' is published at\n  ${release.getHtmlUrl}")
 
-        ghreleaseAssets.value foreach { asset =>
-          val mediaType = keys.ghreleaseMediaTypesMap.value(asset)
-          val rel = asset.relativeTo(baseDirectory.value).getOrElse(asset)
+        if (ghreleaseGithubEnterpriseUrl.value.isEmpty) {
+          ghreleaseAssets.value foreach { asset =>
+            val mediaType = keys.ghreleaseMediaTypesMap.value(asset)
+            val rel = asset.relativeTo(baseDirectory.value).getOrElse(asset)
 
-          release.uploadAsset(asset, mediaType)
-          log.info(s"Asset [${rel}] is uploaded to Github as ${mediaType}")
+            release.uploadAsset(asset, mediaType)
+            log.info(s"Asset [${rel}] is uploaded to Github as ${mediaType}")
+          }
         }
 
         release
