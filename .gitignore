@@ -21,3 +21,5 @@ data/out/
 .tags*
 .ensime*
 .atom*
+
+.DS_Store

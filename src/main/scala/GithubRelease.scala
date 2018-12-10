@@ -24,6 +24,8 @@ case object GithubRelease {
     lazy val ghreleaseTitle         = settingKey[TagName => String]("The title of the release")
     lazy val ghreleaseIsPrerelease  = settingKey[TagName => Boolean]("A function to determine release as a prerelease based on the tag name")
     lazy val ghreleaseGithubToken   = settingKey[Option[String]]("Credentials for accessing the GitHub API")
+    lazy val ghreleaseGithubEnterpriseUrl = settingKey[Option[String]]("Github enterprise API url")
+    lazy val ghreleaseGithubUser    = settingKey[Option[String]]("Github enterprise user name")
     lazy val ghreleaseGithubOrigin  = settingKey[Option[Origin]]("GitHub origin")
 
     lazy val ghreleaseAssets  = taskKey[Seq[File]]("The artifact files to upload")
@@ -40,6 +42,8 @@ case object GithubRelease {
 
     val defaultTokenEnvVar: String = "GITHUB_TOKEN"
     val defaultTokenFile: File = file(s"${getProperty("user.home")}/.github")
+    val defaultEnterpriseUrlEnvVar: String = "GITHUB_URL"
+    val defaultUserEnvVar: String = "GITHUB_USERNAME"
 
     def ghreleaseMediaTypesMap: File => String = {
       val typeMap = new javax.activation.MimetypesFileTypeMap()
@@ -51,7 +55,7 @@ case object GithubRelease {
       typeMap.getContentType
     }
 
-    def githubTokenFromEnv(environmentVariableName: String): Option[String] = {
+    def getSystemEnvVar(environmentVariableName: String): Option[String] = {
       System.getenv().asScala.get(environmentVariableName)
     }
 
@@ -74,7 +78,14 @@ case object GithubRelease {
         sys.error(s"Please provide github credentials in you build by setting the `ghreleaseGithubToken` key!")
       }
 
-      val github = GitHub.connectUsingOAuth(gitHubCredentials)
+      val github = ghreleaseGithubEnterpriseUrl.value.fold {
+        GitHub.connectUsingOAuth(gitHubCredentials)
+      }{ url =>
+        val login = ghreleaseGithubUser.value.getOrElse {
+          sys.error(s"Please provide github enterprise user in you build by setting the `ghreleaseGithubUser` key!")
+        }
+        GitHub.connectToEnterpriseWithOAuth(url, login, gitHubCredentials)
+      }
       if (!github.isCredentialValid) {
         sys.error("No GitHub credentials found !")
       }
@@ -136,12 +147,14 @@ case object GithubRelease {
         // val pub = if(draft.value) "saved as a draft" else "published"
         log.info(s"Github ${pre}release '${release.getName}' is published at\n  ${release.getHtmlUrl}")
 
-        ghreleaseAssets.value foreach { asset =>
-          val mediaType = keys.ghreleaseMediaTypesMap.value(asset)
-          val rel = asset.relativeTo(baseDirectory.value).getOrElse(asset)
+        if (ghreleaseGithubEnterpriseUrl.value.isEmpty) {
+          ghreleaseAssets.value foreach { asset =>
+            val mediaType = keys.ghreleaseMediaTypesMap.value(asset)
+            val rel = asset.relativeTo(baseDirectory.value).getOrElse(asset)
 
-          release.uploadAsset(asset, mediaType)
-          log.info(s"Asset [${rel}] is uploaded to Github as ${mediaType}")
+            release.uploadAsset(asset, mediaType)
+            log.info(s"Asset [${rel}] is uploaded to Github as ${mediaType}")
+          }
         }
 
         release
