@@ -1,6 +1,6 @@
 # http://www.scala-sbt.org/1.x/docs/Travis-CI-with-sbt.html
 language: scala
-jdk: oraclejdk8
+jdk: openjdk8
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION compile
