@@ -4,8 +4,8 @@ name         := "sbt-github-release"
 organization := "ohnosequences"
 description  := "sbt plugin using github releases api"
 
-scalaVersion := "2.12.7"
-sbtVersion   := "1.2.6"
+scalaVersion := "2.12.10"
+sbtVersion   := "1.3.2"
 
 bucketSuffix := "era7.com"
 
