@@ -47,7 +47,6 @@ case object GithubRelease {
       typeMap.addMimeTypes("application/zip jar zip")
       // and .pom is unlikely to be in the system's default MIME types map
       typeMap.addMimeTypes("application/xml pom xml")
-
       typeMap.getContentType
     }
 
